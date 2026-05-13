@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Master Timetable Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #181c27;
+  --surface2: #1e2335;
+  --border: #2a3048;
+  --accent: #f0a500;
+  --accent2: #4fc3f7;
+  --accent3: #81c784;
+  --text: #e8eaf0;
+  --text2: #9aa0b8;
+  --text3: #5c6380;
+  --danger: #ef5350;
+  --radius: 10px;
+
+  --c-english: #4fc3f7;
+  --c-hindi: #ff8a65;
+  --c-marathi: #ce93d8;
+  --c-maths: #81c784;
+  --c-science: #4db6ac;
+  --c-evs: #aed581;
+  --c-physics: #64b5f6;
+  --c-chemistry: #ffb74d;
+  --c-biology: #a5d6a7;
+  --c-sst: #f48fb1;
+  --c-computer: #80deea;
+  --c-pe: #ffcc02;
+  --c-phonics: #b39ddb;
+  --c-art: #ef9a9a;
+  --c-dance: #f48fb1;
+  --c-chess: #bcaaa4;
+  --c-cricket: #a5d6a7;
+  --c-mpt: #ffe082;
+  --c-pt: #ffe082;
+  --c-reading: #fff9c4;
+  --c-free: #2a3048;
+  --c-break: #1e2335;
+  --c-assembly: #263048;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, #0f1117 0%, #1a1f35 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.6rem;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+
+header h1 span {
+  color: var(--text2);
+  font-style: italic;
+  font-size: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* BUTTONS */
+.btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #0f1117;
+}
+.btn-primary:hover { background: #ffb930; transform: translateY(-1px); }
+
+.btn-secondary {
+  background: var(--surface2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--border); }
+
+.btn-export {
+  background: var(--accent3);
+  color: #0f1117;
+}
+.btn-export:hover { background: #a5d6a7; }
+
+/* STATUS BAR */
+#status-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 32px;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text2);
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+#status-bar .status-item { display: flex; gap: 6px; align-items: center; }
+#status-bar .dot { width: 8px; height: 8px; border-radius: 50%; }
+.dot-ok { background: var(--accent3); }
+.dot-warn { background: var(--accent); }
+.dot-err { background: var(--danger); }
+
+/* CONTROLS */
+.controls {
+  padding: 20px 32px;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.control-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+}
+
+select, input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 7px 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  min-width: 160px;
+  cursor: pointer;
+}
+
+select:focus, input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* MAIN CONTENT */
+.main { padding: 24px 32px; }
+
+/* TIMETABLE */
+.timetable-wrapper {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+table.timetable {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px;
+  font-size: 0.8rem;
+}
+
+table.timetable th {
+  background: var(--surface2);
+  color: var(--text2);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+table.timetable th:first-child {
+  color: var(--accent);
+  min-width: 110px;
+}
+
+table.timetable td {
+  border: 1px solid var(--border);
+  padding: 0;
+  vertical-align: top;
+  min-width: 130px;
+}
+
+.cell {
+  padding: 7px 9px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  cursor: default;
+  transition: filter 0.15s;
+}
+
+.cell:hover { filter: brightness(1.15); }
+
+.cell .subj {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: rgba(0,0,0,0.85);
+  line-height: 1.2;
+}
+
+.cell .tchr {
+  font-size: 0.7rem;
+  color: rgba(0,0,0,0.6);
+  font-family: 'DM Mono', monospace;
+}
+
+.cell .time-lbl {
+  font-size: 0.62rem;
+  color: rgba(0,0,0,0.45);
+  margin-top: 2px;
+}
+
+.cell-break {
+  background: var(--c-break) !important;
+  color: var(--text3);
+}
+.cell-break .subj { color: var(--text3) !important; font-style: italic; font-size: 0.75rem; }
+
+.cell-assembly {
+  background: var(--c-assembly) !important;
+}
+.cell-assembly .subj { color: var(--accent2) !important; font-size: 0.75rem; }
+
+.period-col {
+  background: var(--surface2) !important;
+  color: var(--text2);
+  font-family: 'DM Mono', monospace;
+  font-size: 0.72rem;
+  padding: 8px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.period-col .pnum { font-size: 1rem; font-weight: 700; color: var(--text); display: block; }
+.period-col .ptime { font-size: 0.65rem; color: var(--text3); display: block; }
+
+/* LEGEND */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--text2);
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+/* CONFLICT LOG */
+.conflict-log {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+}
+
+.conflict-log h3 {
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.conflict-log ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.conflict-log li {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--text2);
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--bg);
+}
+
+.conflict-log li.warn { border-left: 3px solid var(--accent); }
+.conflict-log li.err { border-left: 3px solid var(--danger); color: #ef9a9a; }
+.conflict-log li.ok { border-left: 3px solid var(--accent3); color: var(--accent3); }
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 16px 32px 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 9px 18px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text2);
+  background: transparent;
+  transition: all 0.15s;
+  font-family: 'Outfit', sans-serif;
+}
+
+.tab:hover { color: var(--text); background: var(--surface2); }
+.tab.active {
+  color: var(--accent);
+  background: var(--bg);
+  border-color: var(--border);
+  border-bottom-color: var(--bg);
+}
+
+/* TEACHER VIEW */
+.teacher-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+  padding: 20px 32px;
+}
+
+.teacher-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.teacher-card-header {
+  background: var(--surface2);
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.teacher-card-header span {
+  font-size: 0.7rem;
+  font-family: 'DM Mono', monospace;
+  color: var(--text3);
+}
+
+.teacher-sessions {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.teacher-session-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+
+.teacher-session-row:last-child { border-bottom: none; }
+.teacher-session-row .day-time { color: var(--text3); font-family: 'DM Mono', monospace; font-size: 0.68rem; }
+
+/* LOADING */
+#loading {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  gap: 16px;
+}
+
+#loading h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.4rem;
+  color: var(--accent);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#loading p { color: var(--text2); font-size: 0.85rem; }
+
+/* SUMMARY STATS */
+.stats-bar {
+  display: flex;
+  gap: 20px;
+  padding: 14px 32px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-item .val {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.5rem;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.stat-item .lbl {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text3);
+}
+
+/* highlight search */
+.highlight { outline: 2px solid var(--accent) !important; }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <h2>Generating Timetable…</h2>
+  <p id="loading-msg">Building schedule data…</p>
+</div>
+
+<header>
+  <div>
+    <h1>Master Timetable <span>2026–27</span></h1>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" onclick="regenerate()">↺ Regenerate</button>
+    <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+</header>
+
+<div id="app" style="display:none;">
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('division')">By Division</button>
+  <button class="tab" onclick="switchTab('teacher')">By Teacher</button>
+</div>
+
+<div class="controls">
+  <div class="control-group" id="division-controls">
+    <label>Division</label>
+    <select id="sel-division" onchange="renderDivisionView()"></select>
+  </div>
+  <div class="control-group" id="day-controls">
+    <label>Day</label>
+    <select id="sel-day" onchange="renderDivisionView()">
+      <option value="all">All Days</option>
+      <option value="0">Monday</option>
+      <option value="1">Tuesday</option>
+      <option value="2">Wednesday</option>
+      <option value="3">Thursday</option>
+      <option value="4">Friday</option>
+      <option value="5">Saturday</option>
+    </select>
+  </div>
+  <div class="control-group" id="teacher-filter-group" style="display:none;">
+    <label>Teacher</label>
+    <select id="sel-teacher" onchange="renderTeacherView()"></select>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="main" id="main-content"></div>
+
+<div style="padding: 0 32px 24px;">
+  <div class="conflict-log" id="conflict-log"></div>
+</div>
+
+</div>
+
+<script>
+// ============================================================
+// DATA DEFINITIONS
+// ============================================================
+
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+
+// Bell schedule - unified for whole school
+// Group A (Gr 1,2,11,12): periods start at P1=9:40
+// Group B (Gr 3-10): periods start at P1=9:00
+// All bells are shared; assembly/meditation handled separately
+
+const BELLS_WEEKDAY = [
+  { time: '8:30', label: 'Meditation/Yoga', groupB: true, groupA: false },
+  { time: '8:45', label: 'Assembly', groupB: true, groupA: false },
+  { time: '9:00', label: 'P1', end: '9:40', groupB: true, groupA: false, isAssembly: true, assemblyA: true },
+  { time: '9:40', label: 'P2', end: '10:20', groupB: true, groupA: true },
+  { time: '10:20', label: 'P3', end: '10:58', groupB: true, groupA: true },
+  { time: '10:58', label: 'Short Break', end: '11:15', isBreak: true, groupB: true, groupA: false },
+  { time: '11:00', label: 'P3 cont', end: '11:15', groupB: false, groupA: true }, // A's P3 continues through B's break
+  { time: '11:15', label: 'P4', end: '11:55', groupB: true, groupA: false, isLunch: true, lunchA: true },
+  { time: '11:15', label: 'Lunch', end: '11:55', isBreak: true, groupB: false, groupA: true },
+  { time: '11:55', label: 'P5', end: '12:35', groupB: true, groupA: true },
+  { time: '12:35', label: 'P6', end: '13:15', groupB: true, groupA: true },
+  { time: '13:15', label: 'P7', end: '13:53', groupB: true, groupA: true },
+  { time: '13:53', label: 'Long Break', end: '14:20', isBreak: true, groupB: true, groupA: false },
+  { time: '14:20', label: 'P8', end: '15:00', groupB: true, groupA: false },
+];
+
+// Simplified period definitions per group per day
+// weekday periods for Group B (Gr 3-10)
+const PERIODS_B_WEEKDAY = [
+  { id:'P1', start:'9:00',  end:'9:40',  label:'P1', dur:40 },
+  { id:'P2', start:'9:40',  end:'10:20', label:'P2', dur:40 },
+  { id:'P3', start:'10:20', end:'10:58', label:'P3', dur:38 },
+  { id:'BRK1', start:'10:58', end:'11:15', label:'Short Break', isBreak:true },
+  { id:'P4', start:'11:15', end:'11:55', label:'P4', dur:40 },
+  { id:'P5', start:'11:55', end:'12:35', label:'P5', dur:40 },
+  { id:'P6', start:'12:35', end:'13:15', label:'P6', dur:40 },
+  { id:'P7', start:'13:15', end:'13:53', label:'P7', dur:38 },
+  { id:'BRK2', start:'13:53', end:'14:20', label:'Long Break', isBreak:true },
+  { id:'P8', start:'14:20', end:'15:00', label:'P8', dur:40 },
+];
+
+// weekday periods for Group A (Gr 1,2,11,12)
+const PERIODS_A_WEEKDAY = [
+  { id:'ASM', start:'9:00', end:'9:40', label:'Assembly', isAssembly:true },
+  { id:'P1', start:'9:40',  end:'10:20', label:'P1', dur:40 },
+  { id:'P2', start:'10:20', end:'10:58', label:'P2', dur:38 },
+  { id:'P3', start:'10:58', end:'11:15', label:'P3', dur:17 }, // short 3rd period before lunch
+  { id:'LUN', start:'11:15', end:'11:55', label:'Lunch Break', isBreak:true },
+  { id:'P4', start:'11:55', end:'12:35', label:'P4', dur:40 },
+  { id:'P5', start:'12:35', end:'13:15', label:'P5', dur:40 },
+  { id:'P6', start:'13:15', end:'13:53', label:'P6', dur:38 },
+];
+
+// saturday Group B
+const PERIODS_B_SAT = [
+  { id:'P1', start:'9:00',  end:'9:45',  label:'P1 (Reading)', dur:45, isReading:true },
+  { id:'P2', start:'9:45',  end:'10:30', label:'P2', dur:45 },
+  { id:'P3', start:'10:30', end:'11:15', label:'P3', dur:45 },
+  { id:'BRK1', start:'11:15', end:'11:30', label:'Short Break', isBreak:true },
+  { id:'P4', start:'11:30', end:'12:15', label:'P4', dur:45 },
+  { id:'P5', start:'12:15', end:'13:00', label:'P5', dur:45 },
+];
+
+// saturday Group A
+const PERIODS_A_SAT = [
+  { id:'ASM', start:'9:00', end:'9:40', label:'Assembly', isAssembly:true },
+  { id:'P1', start:'9:40',  end:'10:25', label:'P1 (Reading)', dur:45, isReading:true },
+  { id:'P2', start:'10:25', end:'11:10', label:'P2', dur:45 },
+  { id:'P3', start:'11:10', end:'11:55', label:'P3', dur:45 },
+  { id:'BRK', start:'11:55', end:'12:10', label:'Short Break', isBreak:true },
+  { id:'P4', start:'12:10', end:'12:55', label:'P4', dur:45 },
+];
+
+// ============================================================
+// DIVISIONS
+// ============================================================
+const DIVISIONS = [
+  { id:'1S',  grade:1,  name:'Grade 1-S',  group:'A' },
+  { id:'1M',  grade:1,  name:'Grade 1-M',  group:'A' },
+  { id:'2S',  grade:2,  name:'Grade 2-S',  group:'A' },
+  { id:'2M',  grade:2,  name:'Grade 2-M',  group:'A' },
+  { id:'3S',  grade:3,  name:'Grade 3-S',  group:'B' },
+  { id:'3M',  grade:3,  name:'Grade 3-M',  group:'B' },
+  { id:'4S',  grade:4,  name:'Grade 4-S',  group:'B' },
+  { id:'5S',  grade:5,  name:'Grade 5-S',  group:'B' },
+  { id:'5M',  grade:5,  name:'Grade 5-M',  group:'B' },
+  { id:'6S',  grade:6,  name:'Grade 6-S',  group:'B' },
+  { id:'7S',  grade:7,  name:'Grade 7-S',  group:'B' },
+  { id:'7M',  grade:7,  name:'Grade 7-M',  group:'B' },
+  { id:'8S',  grade:8,  name:'Grade 8-S',  group:'B' },
+  { id:'8M',  grade:8,  name:'Grade 8-M',  group:'B' },
+  { id:'9',   grade:9,  name:'Grade 9',    group:'B' },
+  { id:'10',  grade:10, name:'Grade 10',   group:'B' },
+  { id:'11',  grade:11, name:'Grade 11',   group:'A' },
+  { id:'12',  grade:12, name:'Grade 12',   group:'A' },
+];
+
+// ============================================================
+// CLASS TEACHERS
+// ============================================================
+const CLASS_TEACHERS = {
+  '1S': 'Bundele Miss',
+  '1M': 'Vaishali Miss',
+  '2S': 'Prajakta Miss',
+  '2M': 'Shobha Miss',
+  '3S': 'Shivali Miss',
+  '3M': 'Jayashree Miss',
+  '4S': 'Ekta Miss',
+  '5S': 'Swapna Miss',
+  '5M': 'Ashwini Miss',
+  '6S': 'Rathor Miss',
+  '7S': 'Sandip Sir',
+  '7M': 'Kalpana Miss',
+  '8S': 'Shital Miss',
+  '8M': 'Beauty Miss',
+  '9':  'Rushikant Sir',
+  '10': 'Sudarshan Sir',
+  '11': 'Sayali Miss',
+  '12': 'Priyanka Auti',
+};
+
+// ============================================================
+// SUBJECT COLORS
+// ============================================================
+const SUBJECT_COLORS = {
+  'English':         '#4fc3f7',
+  'Hindi':           '#ff8a65',
+  'Marathi':         '#ce93d8',
+  'Maths':           '#81c784',
+  'EVS':             '#aed581',
+  'Science':         '#4db6ac',
+  'Physics':         '#64b5f6',
+  'Chemistry':       '#ffb74d',
+  'Biology':         '#a5d6a7',
+  'S.St':            '#f48fb1',
+  'Computer/IT':     '#80deea',
+  'PE/IT':           '#ffcc02',
+  'Phonics':         '#b39ddb',
+  'Speaking Skills': '#b39ddb',
+  'Art':             '#ef9a9a',
+  'Dance & Gym':     '#f06292',
+  'Chess':           '#bcaaa4',
+  'Cricket/BB/Bad':  '#c5e1a5',
+  'MPT':             '#ffe082',
+  'PT':              '#ffe082',
+  'Reading Activity':'#fff9c4',
+  'Class Teacher':   '#e0e0e0',
+};
+
+// ============================================================
+// TEACHER-SUBJECT-GRADE ASSIGNMENTS
+// Format: { teacher, subject, grades:[] }
+// ============================================================
+const TEACHER_ASSIGNMENTS = [
+  { teacher:'Vaishali Miss',    subject:'English',         grades:[1] },
+  { teacher:'Vaishali Miss',    subject:'Maths',           grades:[1] },
+  { teacher:'Vaishali Miss',    subject:'Phonics',         grades:[1,2] },
+  { teacher:'Bundele Miss',     subject:'Hindi',           grades:[1] },
+  { teacher:'Bundele Miss',     subject:'Art',             grades:[1,2] },
+  { teacher:'Prajakta Miss',    subject:'Hindi',           grades:[2,3,4,5] },
+  { teacher:'Prajakta Miss',    subject:'Marathi',         grades:[1] },
+  { teacher:'Shobha Miss',      subject:'Maths',           grades:[2,3] },
+  { teacher:'Shobha Miss',      subject:'English',         grades:[2] },
+  { teacher:'Shobha Miss',      subject:'EVS',             grades:[2] },  // grade 2 has no EVS but keep for edge
+  { teacher:'Jayashree Miss',   subject:'Marathi',         grades:[2,3,4,5] },
+  { teacher:'Ekta Miss',        subject:'Computer/IT',     grades:[1,2] },
+  { teacher:'Ekta Miss',        subject:'English',         grades:[4] },
+  { teacher:'Ekta Miss',        subject:'EVS',             grades:[4] },
+  { teacher:'Shivali Miss',     subject:'English',         grades:[3] },
+  { teacher:'Shivali Miss',     subject:'EVS',             grades:[3] },
+  { teacher:'Shivali Miss',     subject:'Speaking Skills', grades:[3] },
+  { teacher:'Ashwini Miss',     subject:'Maths',           grades:[4,5,6] },
+  { teacher:'Swapna Miss',      subject:'English',         grades:[5,7] },
+  { teacher:'Swapna Miss',      subject:'S.St',            grades:[6] },
+  { teacher:'Rathor Miss',      subject:'English',         grades:[6] },
+  { teacher:'Rathor Miss',      subject:'Maths',           grades:[7,8] },
+  { teacher:'Shivani Miss',     subject:'EVS',             grades:[5] },
+  { teacher:'Shivani Miss',     subject:'Science',         grades:[6,7] },
+  { teacher:'Shivani Miss',     subject:'Biology',         grades:[9,10] },
+  { teacher:'Sayali Miss',      subject:'Science',         grades:[8] },
+  { teacher:'Sayali Miss',      subject:'Chemistry',       grades:[9,10,11,12] },
+  { teacher:'Sayali Miss',      subject:'PE/IT',           grades:[11,12] },
+  { teacher:'Suvarna Miss',     subject:'Biology',         grades:[11,12] },
+  { teacher:'Kalpana Miss',     subject:'Hindi',           grades:[6,7,8,9,10] },
+  { teacher:'Shital Miss',      subject:'Marathi',         grades:[6,7,8,9,10] },
+  { teacher:'Sandip Sir',       subject:'S.St',            grades:[7,8,9,10] },
+  { teacher:'Beauty Miss',      subject:'English',         grades:[8,9,10,11,12] },
+  { teacher:'Rushikant Sir',    subject:'Maths',           grades:[9,10,11,12] },
+  { teacher:'Sudarshan Sir',    subject:'Physics',         grades:[9,10,11,12] },
+  { teacher:'Priyanka Balaji',  subject:'Computer/IT',     grades:[3,5,9,10] },
+  { teacher:'Priyanka Auti',    subject:'Computer/IT',     grades:[4,7,8,11,12] },
+  { teacher:'New IT Tr Khushi', subject:'Computer/IT',     grades:[6] },
+  { teacher:'Soham Sir',        subject:'Art',             grades:[3,4,5,6,7,8,9,10] },
+  { teacher:'Pawan Sir',        subject:'Dance & Gym',     grades:[1,2,3,4,5,6,7,8] },
+  { teacher:'Chordiya Sir',     subject:'Chess',           grades:[3,4,5,6,7,8,9,10] },
+  { teacher:'Sports Teacher',   subject:'Cricket/BB/Bad',  grades:[3,4,5,6,7,8] },
+  { teacher:'ClassTeacher',     subject:'MPT',             grades:[1,2,3,4,5,6,7,8,9,10,11,12] },
+  { teacher:'PT Teacher',       subject:'PT',              grades:[1,2,3,4,5,6,7,8,9,10,11,12] },
+];
+
+// ============================================================
+// WEEKLY SESSIONS PER SUBJECT PER DIVISION
+// ============================================================
+// Grade 1,2 - No EVS, EVS col = Computer
+// Grade 3-5 - EVS
+// Grade 6-8 - Science + SSt
+// Grade 9-12 - Physics+Chemistry+Biology
+// IT/PE parallel for 11,12
+
+const SESSION_COUNTS = {
+  // div: { subject: count }
+  '1S':  { English:4, Hindi:3, Marathi:3, Maths:4, 'Computer/IT':3, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2 },
+  '1M':  { English:4, Hindi:3, Marathi:3, Maths:4, 'Computer/IT':3, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2 },
+  '2S':  { English:4, Hindi:3, Marathi:3, Maths:4, 'Computer/IT':3, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2 },
+  '2M':  { English:4, Hindi:3, Marathi:3, Maths:4, 'Computer/IT':3, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2 },
+  '3S':  { English:5, Hindi:4, Marathi:4, Maths:4, EVS:5, 'Computer/IT':4, 'Speaking Skills':2, MPT:2, PT:2, Art:2, 'Dance & Gym':2, Chess:2, 'Cricket/BB/Bad':2 },
+  '3M':  { English:5, Hindi:4, Marathi:4, Maths:4, EVS:5, 'Computer/IT':4, 'Speaking Skills':2, MPT:2, PT:2, Art:2, 'Dance & Gym':2, Chess:2, 'Cricket/BB/Bad':2 },
+  '4S':  { English:5, Hindi:4, Marathi:4, Maths:5, EVS:4, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':2, Chess:2, 'Cricket/BB/Bad':2 },
+  '5S':  { English:5, Hindi:4, Marathi:4, Maths:5, EVS:4, 'Computer/IT':4, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2, Chess:2, 'Cricket/BB/Bad':2 },
+  '5M':  { English:5, Hindi:4, Marathi:4, Maths:5, EVS:4, 'Computer/IT':4, Phonics:2, MPT:2, PT:2, Art:2, 'Dance & Gym':2, Chess:2, 'Cricket/BB/Bad':2 },
+  '6S':  { English:5, Hindi:4, Marathi:4, Maths:5, Science:5, 'S.St':5, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':1, Chess:1, 'Cricket/BB/Bad':2 },
+  '7S':  { English:5, Hindi:4, Marathi:4, Maths:5, Science:5, 'S.St':5, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':1, Chess:1, 'Cricket/BB/Bad':2 },
+  '7M':  { English:5, Hindi:4, Marathi:4, Maths:5, Science:5, 'S.St':5, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':1, Chess:1, 'Cricket/BB/Bad':2 },
+  '8S':  { English:5, Hindi:4, Marathi:4, Maths:5, Science:5, 'S.St':5, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':1, Chess:1, 'Cricket/BB/Bad':2 },
+  '8M':  { English:5, Hindi:4, Marathi:4, Maths:5, Science:5, 'S.St':5, 'Computer/IT':4, MPT:2, PT:2, Art:2, 'Dance & Gym':1, Chess:1, 'Cricket/BB/Bad':2 },
+  '9':   { English:5, Hindi:5, Marathi:5, Maths:7, Physics:3, Chemistry:3, Biology:3, 'S.St':5, 'Computer/IT':2, MPT:2, PT:2, Art:1, Chess:2 },
+  '10':  { English:5, Hindi:5, Marathi:5, Maths:7, Physics:3, Chemistry:3, Biology:3, 'S.St':5, 'Computer/IT':2, MPT:2, PT:2, Art:1, Chess:2 },
+  '11':  { English:3, Maths:5, Physics:3, Chemistry:3, Biology:4, 'Computer/IT':2, 'PE/IT':4, MPT:2, PT:2 },
+  '12':  { English:3, Maths:5, Physics:3, Chemistry:3, Biology:4, 'Computer/IT':2, 'PE/IT':4, MPT:2, PT:2 },
+};
+
+// Saturday allowed subjects (no CCA except MPT/PT)
+const SAT_ACADEMIC = new Set(['English','Hindi','Marathi','Maths','EVS','Science','Physics','Chemistry','Biology','S.St','Computer/IT','PE/IT','Phonics','Speaking Skills','Reading Activity']);
+
+// ============================================================
+// LOOK UP teacher for a given subject + grade
+// ============================================================
+function getTeacher(subject, grade) {
+  const match = TEACHER_ASSIGNMENTS.find(a => a.subject === subject && a.grades.includes(grade));
+  return match ? match.teacher : 'Unknown';
+}
+
+// ============================================================
+// SCHEDULE GENERATION
+// ============================================================
+
+let SCHEDULE = {}; // SCHEDULE[divId][dayIdx] = [ {periodId, subject, teacher, isBreak, isAssembly, isReading} ]
+let TEACHER_BUSY = {}; // TEACHER_BUSY[teacher][dayIdx][periodId] = divId
+let CONFLICTS = [];
+
+function getPeriods(group, issat) {
+  if (group === 'A') return issat ? PERIODS_A_SAT : PERIODS_A_WEEKDAY;
+  return issat ? PERIODS_B_SAT : PERIODS_B_WEEKDAY;
+}
+
+function getAcademicPeriodIds(group, isSat) {
+  return getPeriods(group, isSat)
+    .filter(p => !p.isBreak && !p.isAssembly)
+    .map(p => p.id);
+}
+
+function initStructures() {
+  SCHEDULE = {};
+  TEACHER_BUSY = {};
+  CONFLICTS = [];
+
+  for (const div of DIVISIONS) {
+    SCHEDULE[div.id] = {};
+    for (let d = 0; d < 6; d++) {
+      const isSat = d === 5;
+      const periods = getPeriods(div.group, isSat);
+      SCHEDULE[div.id][d] = periods.map(p => ({
+        periodId: p.id,
+        subject: p.isBreak ? 'BREAK' : p.isAssembly ? 'ASSEMBLY' : p.isReading ? 'Reading Activity' : null,
+        teacher: null,
+        isBreak: p.isBreak || false,
+        isAssembly: p.isAssembly || false,
+        isReading: p.isReading || false,
+        start: p.start,
+        end: p.end,
+        label: p.label,
+      }));
+    }
+  }
+
+  // Init teacher busy map
+  for (const ta of TEACHER_ASSIGNMENTS) {
+    if (!TEACHER_BUSY[ta.teacher]) TEACHER_BUSY[ta.teacher] = {};
+    for (let d = 0; d < 6; d++) {
+      if (!TEACHER_BUSY[ta.teacher][d]) TEACHER_BUSY[ta.teacher][d] = {};
+    }
+  }
+  // Also for class teachers and PT
+  ['ClassTeacher','PT Teacher'].forEach(t => {
+    if (!TEACHER_BUSY[t]) TEACHER_BUSY[t] = {};
+    for (let d = 0; d < 6; d++) TEACHER_BUSY[t][d] = {};
+  });
+}
+
+function isTeacherFree(teacher, dayIdx, periodId) {
+  if (!TEACHER_BUSY[teacher]) return true;
+  if (!TEACHER_BUSY[teacher][dayIdx]) return true;
+  return !TEACHER_BUSY[teacher][dayIdx][periodId];
+}
+
+function markTeacherBusy(teacher, dayIdx, periodId, divId) {
+  if (!TEACHER_BUSY[teacher]) TEACHER_BUSY[teacher] = {};
+  if (!TEACHER_BUSY[teacher][dayIdx]) TEACHER_BUSY[teacher][dayIdx] = {};
+  TEACHER_BUSY[teacher][dayIdx][periodId] = divId;
+}
+
+function assignSlot(divId, dayIdx, periodIdx, subject, teacher) {
+  SCHEDULE[divId][dayIdx][periodIdx].subject = subject;
+  SCHEDULE[divId][dayIdx][periodIdx].teacher = teacher;
+  markTeacherBusy(teacher, dayIdx, SCHEDULE[divId][dayIdx][periodIdx].periodId, divId);
+}
+
+// Get free academic period indices for a division on a day
+function getFreeSlots(divId, dayIdx) {
+  return SCHEDULE[divId][dayIdx]
+    .map((s, i) => ({ ...s, idx: i }))
+    .filter(s => !s.isBreak && !s.isAssembly && !s.isReading && s.subject === null);
+}
+
+// Count how many times subject appears in a div's week so far
+function countAssigned(divId, subject) {
+  let c = 0;
+  for (let d = 0; d < 6; d++) {
+    for (const slot of SCHEDULE[divId][d]) {
+      if (slot.subject === subject) c++;
+    }
+  }
+  return c;
+}
+
+function countAssignedDay(divId, dayIdx, subject) {
+  return SCHEDULE[divId][dayIdx].filter(s => s.subject === subject).length;
+}
+
+// ============================================================
+// MAIN SCHEDULING ALGORITHM
+// ============================================================
+
+function generateSchedule() {
+  initStructures();
+
+  const div_list = DIVISIONS;
+
+  // STEP 1: Place MPT on same slot for all divisions (shared school-wide)
+  // MPT: Wednesday P4 for all (middle of week, after lunch)
+  const MPT_DAY = 2; // Wednesday
+  const MPT_PERIOD_B = 'P4';
+  const MPT_PERIOD_A = 'P4';
+
+  for (const div of div_list) {
+    const isSat = MPT_DAY === 5;
+    const periods = getPeriods(div.group, isSat);
+    const pidx = periods.findIndex(p => p.id === (div.group === 'A' ? MPT_PERIOD_A : MPT_PERIOD_B));
+    if (pidx >= 0 && !SCHEDULE[div.id][MPT_DAY][pidx].isBreak) {
+      const ct = CLASS_TEACHERS[div.id] || 'ClassTeacher';
+      SCHEDULE[div.id][MPT_DAY][pidx].subject = 'MPT';
+      SCHEDULE[div.id][MPT_DAY][pidx].teacher = ct;
+      // Don't mark class teacher busy — each class teacher is unique to their division
+    }
+  }
+
+  // STEP 2: Place PT on same slot for all divisions
+  // PT: Friday P3 for all
+  const PT_DAY = 4; // Friday
+  const PT_PERIOD = 'P3';
+  for (const div of div_list) {
+    const periods = getPeriods(div.group, false);
+    const pidx = periods.findIndex(p => p.id === PT_PERIOD);
+    if (pidx >= 0) {
+      SCHEDULE[div.id][PT_DAY][pidx].subject = 'PT';
+      SCHEDULE[div.id][PT_DAY][pidx].teacher = 'PT Teacher';
+      markTeacherBusy('PT Teacher', PT_DAY, PT_PERIOD, div.id + '_all');
+    }
+  }
+
+  // STEP 3: Assign class teacher's subject as P1 each day for their division
+  // For Group B: P1 = index 0 (9:00-9:40)
+  // For Group A: P1 = first academic period after assembly (index 1)
+  for (const div of div_list) {
+    const ct = CLASS_TEACHERS[div.id];
+    if (!ct) continue;
+    // Find what subject the class teacher teaches to this grade
+    const grade = div.grade;
+    const ctSubjects = TEACHER_ASSIGNMENTS
+      .filter(a => a.teacher === ct && a.grades.includes(grade))
+      .map(a => a.subject)
+      .filter(s => s !== 'MPT' && s !== 'PT');
+
+    if (ctSubjects.length === 0) continue;
+
+    for (let d = 0; d < 6; d++) {
+      const isSat = d === 5;
+      const periods = getPeriods(div.group, isSat);
+      // Find first academic (non-break, non-assembly, non-reading) slot index
+      let firstAcadIdx = -1;
+      if (isSat) {
+        // Saturday P1 = reading, so first free is P2
+        firstAcadIdx = periods.findIndex(p => !p.isBreak && !p.isAssembly && !p.isReading);
+      } else {
+        firstAcadIdx = periods.findIndex(p => !p.isBreak && !p.isAssembly);
+      }
+      if (firstAcadIdx < 0) continue;
+      const slot = SCHEDULE[div.id][d][firstAcadIdx];
+      if (slot.isBreak || slot.isAssembly || slot.isReading || slot.subject !== null) continue;
+
+      // Pick a CT subject that still needs sessions
+      let assigned = false;
+      for (const subj of ctSubjects) {
+        const needed = SESSION_COUNTS[div.id]?.[subj] || 0;
+        const alreadyDone = countAssigned(div.id, subj);
+        const todayCount = countAssignedDay(div.id, d, subj);
+        if (alreadyDone < needed && todayCount === 0 && isTeacherFree(ct, d, slot.periodId)) {
+          assignSlot(div.id, d, firstAcadIdx, subj, ct);
+          assigned = true;
+          break;
+        }
+      }
+      // If no fresh subject, just pick first available CT subject still needed
+      if (!assigned) {
+        for (const subj of ctSubjects) {
+          const needed = SESSION_COUNTS[div.id]?.[subj] || 0;
+          const alreadyDone = countAssigned(div.id, subj);
+          if (alreadyDone < needed && isTeacherFree(ct, d, slot.periodId)) {
+            assignSlot(div.id, d, firstAcadIdx, subj, ct);
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  // STEP 4: Build remaining session requirements, sorted by scarcity
+  // For each div, list {subject, teacher, remaining}
+  // Sort: teachers with most divisions first (hardest to schedule)
+  const teacherDivCount = {};
+  for (const ta of TEACHER_ASSIGNMENTS) {
+    if (!teacherDivCount[ta.teacher]) teacherDivCount[ta.teacher] = 0;
+    teacherDivCount[ta.teacher] += ta.grades.length;
+  }
+
+  // Build tasks: all (div, subject, teacher, remaining) tuples
+  let tasks = [];
+  for (const div of div_list) {
+    const counts = SESSION_COUNTS[div.id] || {};
+    for (const [subject, total] of Object.entries(counts)) {
+      if (subject === 'MPT' || subject === 'PT') continue;
+      const teacher = getTeacherForDiv(subject, div.grade, div.id);
+      if (!teacher) continue;
+      tasks.push({ divId: div.id, subject, teacher, total, priority: teacherDivCount[teacher] || 1 });
+    }
+  }
+
+  // Sort by priority descending (Pawan Sir, Soham Sir, Chordiya Sir first)
+  tasks.sort((a, b) => b.priority - a.priority);
+
+  // STEP 5: Assign remaining sessions
+  const MAX_PASSES = 5;
+  for (let pass = 0; pass < MAX_PASSES; pass++) {
+    let anyAssigned = false;
+    for (const task of tasks) {
+      const { divId, subject, teacher } = task;
+      const div = DIVISIONS.find(d => d.id === divId);
+      const needed = task.total;
+      const done = countAssigned(divId, subject);
+      if (done >= needed) continue;
+
+      // Try to assign one more session across the week
+      // Prefer days where this subject hasn't appeared yet
+      const dayOrder = getDayOrder(divId, subject, needed - done);
+      let placed = false;
+
+      for (const dayIdx of dayOrder) {
+        const isSat = dayIdx === 5;
+        if (isSat && !SAT_ACADEMIC.has(subject)) continue; // no CCA on saturday
+        const freeSlots = getFreeSlots(divId, dayIdx);
+        if (freeSlots.length === 0) continue;
+        const todayCount = countAssignedDay(divId, dayIdx, subject);
+        if (todayCount >= 1 && needed <= 6) continue; // max 1 per day if total sessions ≤ 6
+
+        // Find a free slot where teacher is also free
+        const periodOrder = shuffleSlots(freeSlots);
+        for (const slot of periodOrder) {
+          if (isTeacherFree(teacher, dayIdx, slot.periodId)) {
+            assignSlot(divId, dayIdx, slot.idx, subject, teacher);
+            placed = true;
+            anyAssigned = true;
+            break;
+          }
+        }
+        if (placed) break;
+      }
+
+      // If still not placed (teacher conflict), try any free slot on any day
+      if (!placed) {
+        for (let d = 0; d < 6; d++) {
+          const isSat = d === 5;
+          if (isSat && !SAT_ACADEMIC.has(subject)) continue;
+          const freeSlots = getFreeSlots(divId, d);
+          for (const slot of freeSlots) {
+            if (isTeacherFree(teacher, d, slot.periodId)) {
+              assignSlot(divId, d, slot.idx, subject, teacher);
+              placed = true;
+              anyAssigned = true;
+              break;
+            }
+          }
+          if (placed) break;
+        }
+      }
+    }
+    if (!anyAssigned) break;
+  }
+
+  // STEP 6: Validate and log conflicts
+  validateSchedule();
+
+  return SCHEDULE;
+}
+
+function getTeacherForDiv(subject, grade, divId) {
+  // Special: PE/IT is parallel for grade 11,12 - teacher is Sayali Miss for PE
+  if (subject === 'PE/IT') {
+    return 'Sayali Miss'; // PE portion; IT is parallel same slot
+  }
+  // Special: MPT uses class teacher
+  if (subject === 'MPT') return CLASS_TEACHERS[divId] || 'ClassTeacher';
+  if (subject === 'PT') return 'PT Teacher';
+
+  const match = TEACHER_ASSIGNMENTS.find(a => a.subject === subject && a.grades.includes(grade));
+  return match ? match.teacher : null;
+}
+
+// Get preferred day order for distributing sessions
+function getDayOrder(divId, subject, remaining) {
+  const subjectDays = [];
+  for (let d = 0; d < 6; d++) {
+    const cnt = countAssignedDay(divId, d, subject);
+    subjectDays.push({ d, cnt });
+  }
+  // Prefer days without this subject yet, weighted by available slots
+  subjectDays.sort((a, b) => a.cnt - b.cnt);
+  return subjectDays.map(x => x.d);
+}
+
+function shuffleSlots(slots) {
+  // Return slots in a semi-random order (middle periods preferred for variety)
+  return [...slots].sort((a, b) => {
+    // Prefer middle-ish slots
+    const midA = Math.abs(a.idx - 3);
+    const midB = Math.abs(b.idx - 3);
+    return midA - midB;
+  });
+}
+
+function validateSchedule() {
+  CONFLICTS = [];
+  let totalAssigned = 0;
+  let totalNeeded = 0;
+  let teacherConflicts = 0;
+
+  // Check teacher conflicts
+  for (const [teacher, days] of Object.entries(TEACHER_BUSY)) {
+    for (let d = 0; d < 6; d++) {
+      if (!days[d]) continue;
+      const periods = Object.entries(days[d]);
+      for (const [pid, divId] of periods) {
+        // Check if multiple divs assigned same teacher same slot
+        const count = periods.filter(([p]) => p === pid).length;
+        if (count > 1 && teacher !== 'PT Teacher') {
+          CONFLICTS.push({ type:'err', msg:`CONFLICT: ${teacher} assigned to multiple classes on ${DAYS[d]} ${pid}` });
+          teacherConflicts++;
+        }
+      }
+    }
+  }
+
+  // Check session counts
+  for (const div of DIVISIONS) {
+    const counts = SESSION_COUNTS[div.id] || {};
+    for (const [subject, needed] of Object.entries(counts)) {
+      totalNeeded += needed;
+      const done = countAssigned(div.id, subject);
+      totalAssigned += done;
+      if (done < needed) {
+        CONFLICTS.push({ type:'warn', msg:`${div.name}: ${subject} — ${done}/${needed} sessions scheduled` });
+      }
+    }
+  }
+
+  const pct = Math.round((totalAssigned / totalNeeded) * 100);
+  CONFLICTS.unshift({ type:'ok', msg:`Schedule completeness: ${totalAssigned}/${totalNeeded} sessions (${pct}%)` });
+  if (teacherConflicts === 0) {
+    CONFLICTS.unshift({ type:'ok', msg:`No teacher conflicts detected ✓` });
+  }
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+
+let currentTab = 'division';
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('division-controls').style.display = tab === 'division' ? '' : 'none';
+  document.getElementById('day-controls').style.display = tab === 'division' ? '' : 'none';
+  document.getElementById('teacher-filter-group').style.display = tab === 'teacher' ? '' : 'none';
+  if (tab === 'division') renderDivisionView();
+  else renderTeacherView();
+}
+
+function renderDivisionView() {
+  const divId = document.getElementById('sel-division').value;
+  const dayFilter = document.getElementById('sel-day').value;
+  const div = DIVISIONS.find(d => d.id === divId);
+  if (!div) return;
+
+  const dayIndices = dayFilter === 'all' ? [0,1,2,3,4,5] : [parseInt(dayFilter)];
+  const isSingle = dayIndices.length === 1;
+
+  let html = '';
+
+  if (isSingle) {
+    // Show single day as a nice list
+    const d = dayIndices[0];
+    const isSat = d === 5;
+    const slots = SCHEDULE[divId][d];
+    html += `<div class="timetable-wrapper"><table class="timetable">
+      <thead><tr>
+        <th>Period</th>
+        <th>${DAYS[d]}</th>
+        <th>Teacher</th>
+      </tr></thead><tbody>`;
+    for (const slot of slots) {
+      const color = slot.isBreak ? '#1e2335' : slot.isAssembly ? '#263048' : (SUBJECT_COLORS[slot.subject] || '#3a4060');
+      const textColor = slot.isBreak || slot.isAssembly ? '#9aa0b8' : 'rgba(0,0,0,0.8)';
+      html += `<tr>
+        <td class="period-col"><span class="pnum">${slot.label}</span><span class="ptime">${slot.start}–${slot.end}</span></td>
+        <td><div class="cell" style="background:${color}">
+          <span class="subj" style="color:${textColor}">${slot.subject || '—'}</span>
+        </div></td>
+        <td><div class="cell" style="background:${color}">
+          <span class="subj" style="color:${textColor};font-weight:400;font-size:0.78rem">${slot.teacher || (slot.isBreak || slot.isAssembly ? '' : '—')}</span>
+        </div></td>
+      </tr>`;
+    }
+    html += '</tbody></table></div>';
+  } else {
+    // Show full week grid: rows = periods, cols = days
+    // Determine max periods
+    const maxPeriods = Math.max(
+      ...dayIndices.map(d => SCHEDULE[divId][d].length)
+    );
+
+    html += `<div class="timetable-wrapper"><table class="timetable">
+      <thead><tr>
+        <th>Period / Time</th>
+        ${dayIndices.map(d => `<th>${DAYS[d]}</th>`).join('')}
+      </tr></thead><tbody>`;
+
+    for (let pi = 0; pi < maxPeriods; pi++) {
+      // Get the period label from first day that has this index
+      const firstDay = dayIndices.find(d => SCHEDULE[divId][d][pi]);
+      if (!firstDay && firstDay !== 0) continue;
+      const sample = SCHEDULE[divId][firstDay][pi];
+
+      html += `<tr>
+        <td class="period-col">
+          <span class="pnum">${sample.label}</span>
+          <span class="ptime">${sample.start}–${sample.end}</span>
+        </td>`;
+
+      for (const d of dayIndices) {
+        const slot = SCHEDULE[divId][d][pi];
+        if (!slot) { html += '<td></td>'; continue; }
+        const color = slot.isBreak ? '#1e2335' : slot.isAssembly ? '#263048' : (SUBJECT_COLORS[slot.subject] || '#3a4060');
+        const textColor = slot.isBreak || slot.isAssembly ? '#9aa0b8' : 'rgba(0,0,0,0.8)';
+        html += `<td><div class="cell" style="background:${color}">
+          <span class="subj" style="color:${textColor}">${slot.subject || '—'}</span>
+          ${slot.teacher && !slot.isBreak && !slot.isAssembly ? `<span class="tchr" style="color:${textColor}">${slot.teacher}</span>` : ''}
+        </div></td>`;
+      }
+      html += '</tr>';
+    }
+    html += '</tbody></table></div>';
+  }
+
+  document.getElementById('main-content').innerHTML = html;
+  renderConflictLog();
+}
+
+function renderTeacherView() {
+  const teacher = document.getElementById('sel-teacher').value;
+  if (!teacher) return;
+
+  // Find all sessions for this teacher across all divs and days
+  let sessions = [];
+  for (const div of DIVISIONS) {
+    for (let d = 0; d < 6; d++) {
+      for (const slot of SCHEDULE[div.id][d]) {
+        if (slot.teacher === teacher) {
+          sessions.push({ div: div.name, divId: div.id, day: DAYS[d], dayIdx: d, subject: slot.subject, time: `${slot.start}–${slot.end}`, label: slot.label });
+        }
+      }
+    }
+  }
+
+  // Build weekly grid for teacher
+  const allDivIds = [...new Set(sessions.map(s => s.divId))];
+
+  // Show as table: days as cols, periods as rows
+  // First get all period labels
+  const periodSet = [];
+  for (let d = 0; d < 6; d++) {
+    const isSat = d === 5;
+    // Use Group B periods as reference (more periods)
+    const periods = getPeriods('B', isSat);
+    for (const p of periods) {
+      if (!periodSet.find(x => x.label === p.label && x.d === d)) {
+        periodSet.push({ ...p, d });
+      }
+    }
+  }
+
+  // Build day→period→session map
+  const grid = {}; // grid[dayIdx][label] = session
+  for (const s of sessions) {
+    if (!grid[s.dayIdx]) grid[s.dayIdx] = {};
+    grid[s.dayIdx][s.label] = s;
+  }
+
+  // Get unique period labels across all days
+  const allPeriodLabels = [...new Set(periodSet.map(p => p.label))];
+
+  let html = `<div class="timetable-wrapper"><table class="timetable">
+    <thead><tr>
+      <th>Period</th>
+      ${DAYS.map((d,i) => `<th>${d}</th>`).join('')}
+    </tr></thead><tbody>`;
+
+  for (const label of allPeriodLabels) {
+    let hasContent = false;
+    for (let d = 0; d < 6; d++) {
+      if (grid[d] && grid[d][label]) { hasContent = true; break; }
+    }
+
+    const pDef = periodSet.find(p => p.label === label);
+    html += `<tr>
+      <td class="period-col">
+        <span class="pnum">${label}</span>
+        ${pDef ? `<span class="ptime">${pDef.start}–${pDef.end}</span>` : ''}
+      </td>`;
+
+    for (let d = 0; d < 6; d++) {
+      const s = grid[d] && grid[d][label];
+      if (s) {
+        const color = SUBJECT_COLORS[s.subject] || '#3a4060';
+        html += `<td><div class="cell" style="background:${color}">
+          <span class="subj" style="color:rgba(0,0,0,0.8)">${s.subject}</span>
+          <span class="tchr" style="color:rgba(0,0,0,0.6)">${s.div}</span>
+        </div></td>`;
+      } else {
+        html += `<td><div class="cell cell-break"><span class="subj">—</span></div></td>`;
+      }
+    }
+    html += '</tr>';
+  }
+
+  html += '</tbody></table></div>';
+
+  // Session summary
+  const totalSessions = sessions.length;
+  html += `<div style="margin-top:14px; padding:14px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); font-size:0.8rem; color:var(--text2);">
+    <strong style="color:var(--text)">${teacher}</strong> — ${totalSessions} sessions/week across ${allDivIds.length} class(es): ${allDivIds.join(', ')}
+  </div>`;
+
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function renderConflictLog() {
+  const log = document.getElementById('conflict-log');
+  const items = CONFLICTS.slice(0, 30);
+  log.innerHTML = `<h3>Schedule Log</h3><ul>${items.map(c => `<li class="${c.type}">${c.msg}</li>`).join('')}</ul>`;
+}
+
+function renderLegend() {
+  const legend = document.getElementById('legend');
+  const entries = Object.entries(SUBJECT_COLORS).slice(0, 20);
+  legend.innerHTML = entries.map(([subj, color]) =>
+    `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div>${subj}</div>`
+  ).join('');
+}
+
+function renderStats() {
+  const totalNeeded = Object.values(SESSION_COUNTS).reduce((acc, div) =>
+    acc + Object.values(div).reduce((a, b) => a + b, 0), 0);
+
+  let totalAssigned = 0;
+  for (const div of DIVISIONS) {
+    for (let d = 0; d < 6; d++) {
+      totalAssigned += SCHEDULE[div.id][d].filter(s => s.subject && !s.isBreak && !s.isAssembly && s.subject !== 'BREAK' && s.subject !== 'ASSEMBLY').length;
+    }
+  }
+
+  const pct = Math.round((totalAssigned / totalNeeded) * 100);
+  const conflicts = CONFLICTS.filter(c => c.type === 'err').length;
+
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat-item"><div class="val">${DIVISIONS.length}</div><div class="lbl">Divisions</div></div>
+    <div class="stat-item"><div class="val">${Object.keys(TEACHER_BUSY).length}</div><div class="lbl">Teachers</div></div>
+    <div class="stat-item"><div class="val">${totalAssigned}</div><div class="lbl">Sessions Placed</div></div>
+    <div class="stat-item"><div class="val">${pct}%</div><div class="lbl">Completeness</div></div>
+    <div class="stat-item"><div class="val" style="color:${conflicts > 0 ? 'var(--danger)' : 'var(--accent3)'}">${conflicts}</div><div class="lbl">Teacher Conflicts</div></div>
+  `;
+}
+
+function populateSelectors() {
+  const divSel = document.getElementById('sel-division');
+  divSel.innerHTML = DIVISIONS.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+
+  const teacherSel = document.getElementById('sel-teacher');
+  const teachers = [...new Set(TEACHER_ASSIGNMENTS.map(a => a.teacher))].sort();
+  teachers.push('PT Teacher');
+  teacherSel.innerHTML = teachers.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+// ============================================================
+// CSV EXPORT
+// ============================================================
+function exportCSV() {
+  let csv = '';
+
+  for (const div of DIVISIONS) {
+    csv += `\nDIVISION: ${div.name}\n`;
+    csv += `Period,Time,${DAYS.join(',')}\n`;
+
+    const maxPeriods = Math.max(...[0,1,2,3,4,5].map(d => SCHEDULE[div.id][d].length));
+
+    for (let pi = 0; pi < maxPeriods; pi++) {
+      const firstDaySlot = SCHEDULE[div.id][0][pi] || SCHEDULE[div.id][1][pi];
+      if (!firstDaySlot) continue;
+      const timeStr = `${firstDaySlot.start}-${firstDaySlot.end}`;
+      const row = [firstDaySlot.label, timeStr];
+      for (let d = 0; d < 6; d++) {
+        const slot = SCHEDULE[div.id][d][pi];
+        if (!slot) { row.push(''); continue; }
+        if (slot.isBreak) { row.push(slot.label); continue; }
+        if (slot.isAssembly) { row.push('Assembly'); continue; }
+        const cell = slot.subject ? `${slot.subject}${slot.teacher ? ' (' + slot.teacher + ')' : ''}` : '';
+        row.push(cell);
+      }
+      csv += row.map(c => `"${(c||'').replace(/"/g,'""')}"`).join(',') + '\n';
+    }
+  }
+
+  // Teacher view export
+  csv += '\n\nTEACHER SCHEDULES\n';
+  const teachers = [...new Set(TEACHER_ASSIGNMENTS.map(a => a.teacher))];
+  for (const teacher of teachers) {
+    csv += `\nTEACHER: ${teacher}\n`;
+    csv += `Day,Period,Time,Division,Subject\n`;
+    for (let d = 0; d < 6; d++) {
+      for (const div of DIVISIONS) {
+        for (const slot of SCHEDULE[div.id][d]) {
+          if (slot.teacher === teacher) {
+            csv += `"${DAYS[d]}","${slot.label}","${slot.start}-${slot.end}","${div.name}","${slot.subject}"\n`;
+          }
+        }
+      }
+    }
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'school_timetable_2026_27.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================================
+// REGENERATE
+// ============================================================
+function regenerate() {
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  setTimeout(() => {
+    generateSchedule();
+    renderStats();
+    renderDivisionView();
+    renderConflictLog();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }, 300);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('DOMContentLoaded', () => {
+  const msgs = [
+    'Loading teacher assignments…',
+    'Building division structures…',
+    'Placing mandatory sessions…',
+    'Resolving teacher conflicts…',
+    'Optimizing distribution…',
+    'Finalising timetable…',
+  ];
+  let mi = 0;
+  const msgEl = document.getElementById('loading-msg');
+  const interval = setInterval(() => {
+    if (mi < msgs.length) { msgEl.textContent = msgs[mi++]; }
+  }, 200);
+
+  setTimeout(() => {
+    clearInterval(interval);
+    generateSchedule();
+    populateSelectors();
+    renderLegend();
+    renderStats();
+    renderConflictLog();
+    renderDivisionView();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }, 1400);
+});
+</script>
+</body>
+</html>
