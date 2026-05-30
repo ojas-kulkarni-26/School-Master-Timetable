@@ -1,0 +1,3128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Timetable Generator</title>
+  <style>
+/* ============================================================
+   styles.css — Functional styling for timetable app
+   ============================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  background: #f5f5f5;
+  color: #333;
+}
+
+.app-header {
+  background: #2c3e50;
+  color: white;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-right: 16px;
+}
+
+.seed-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.seed-group label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.seed-group input {
+  padding: 5px 10px;
+  border: 1px solid #7f8c8d;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 160px;
+  background: #34495e;
+  color: white;
+}
+
+.seed-group input::placeholder {
+  color: #95a5a6;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+}
+
+.btn-primary:hover { background: #2980b9; }
+.btn-primary:disabled { background: #7f8c8d; cursor: not-allowed; }
+
+.btn-secondary {
+  background: #95a5a6;
+  color: white;
+}
+
+.btn-secondary:hover { background: #7f8c8d; }
+
+/* Tabs */
+.tab-bar {
+  background: #ecf0f1;
+  border-bottom: 1px solid #bdc3c7;
+  display: flex;
+  padding: 0 16px;
+}
+
+.tab-btn {
+  padding: 10px 18px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  color: #7f8c8d;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  color: #2c3e50;
+}
+
+.tab-btn.active {
+  color: #2c3e50;
+  border-bottom-color: #3498db;
+  background: white;
+}
+
+/* Status */
+.status-bar {
+  padding: 8px 16px;
+  font-size: 12px;
+}
+
+.status {
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.status.success { background: #d5f5e3; color: #1e8449; }
+.status.error { background: #fadbd8; color: #c0392b; }
+.status.generating { background: #fdebd0; color: #d68910; }
+
+/* View content */
+#view-content {
+  padding: 12px 16px;
+  overflow-x: auto;
+}
+
+.view-controls, .master-controls {
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.view-controls label, .master-controls label {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.view-controls select, .master-controls select {
+  padding: 4px 8px;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+/* Timetable tables */
+.timetable-scroll {
+  overflow-x: auto;
+}
+
+.timetable {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12px;
+  background: white;
+  border: 1px solid #bdc3c7;
+}
+
+.timetable th {
+  background: #2c3e50;
+  color: white;
+  padding: 6px 8px;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.timetable td {
+  padding: 4px 6px;
+  border: 1px solid #ddd;
+  text-align: center;
+  vertical-align: top;
+}
+
+.class-header {
+  min-width: 80px;
+}
+
+.day-cell {
+  background: #34495e;
+  color: white;
+  font-weight: 600;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.time-cell {
+  background: #ecf0f1;
+  font-size: 11px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.period-label {
+  background: #ecf0f1;
+  font-weight: 600;
+  text-align: center;
+}
+
+.period-cell {
+  text-align: center;
+  min-width: 80px;
+}
+
+.period-cell .subject {
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.period-cell .teacher {
+  font-size: 10px;
+  color: #666;
+  line-height: 1.3;
+}
+
+.period-cell .tag {
+  font-size: 9px;
+  color: #888;
+  font-style: italic;
+}
+
+.period-cell .note {
+  display: block;
+  font-size: 9px;
+  color: #888;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.empty-cell {
+  background: #fafafa;
+  color: #ccc;
+}
+
+/* Cell type colors */
+.mpt-cell { background: #ebf5fb; }
+.ct-cell { background: #eafaf1; }
+.revision-cell { background: #fef9e7; }
+.test-cell { background: #fdedec; }
+.practical-cell { background: #f4ecf7; }
+.combined-cell { background: #e8f8f5; }
+.extra-cell { background: #fff3cd; }
+.free-cell { color: #27ae60; font-weight: 500; }
+
+/* Summary tables */
+.summary-table {
+  margin-top: 12px;
+  border-collapse: collapse;
+  font-size: 12px;
+  width: auto;
+}
+
+.summary-table th {
+  background: #344950;
+  color: white;
+  padding: 6px 12px;
+}
+
+.summary-table td {
+  padding: 4px 12px;
+  border: 1px solid #ddd;
+}
+
+.summary-table .ok { color: #27ae60; font-weight: 600; }
+.summary-table .short { color: #e67e22; font-weight: 600; }
+
+/* Summary master table */
+.summary-master {
+  font-size: 11px;
+}
+
+.summary-master .subject-label {
+  text-align: left;
+  font-weight: 600;
+  background: #ecf0f1;
+  white-space: nowrap;
+}
+
+.summary-master .ok { color: #27ae60; font-weight: 600; }
+.summary-master .short { color: #e67e22; font-weight: 600; }
+.summary-master .missing { color: #e74c3c; font-weight: 600; }
+.summary-master .na { color: #bbb; }
+.summary-master .total { background: #ecf0f1; font-weight: 600; }
+
+/* Warnings */
+#warnings {
+  padding: 0 16px 16px;
+}
+
+.error-block, .warning-block {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.error-block {
+  background: #fadbd8;
+  border: 1px solid #e74c3c;
+}
+
+.warning-block {
+  background: #fef9e7;
+  border: 1px solid #f39c12;
+}
+
+.error-block h4, .warning-block h4 {
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.error-item, .warning-item {
+  margin-left: 16px;
+  margin-bottom: 2px;
+}
+
+h3 {
+  margin-bottom: 8px;
+  font-size: 16px;
+  color: #2c3e50;
+}
+
+h4 {
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+p {
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .timetable {
+    font-size: 11px;
+  }
+
+  .period-cell .subject { font-size: 10px; }
+  .period-cell .teacher { font-size: 9px; }
+}
+
+/* Swap modal */
+.clickable-cell {
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.clickable-cell:hover {
+  box-shadow: inset 0 0 0 2px #3498db;
+}
+
+.swap-hint {
+  font-size: 12px;
+  color: #7f8c8d;
+  margin: 4px 0 8px;
+}
+
+.swap-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swap-modal {
+  background: white;
+  border-radius: 8px;
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+.swap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eee;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.swap-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.swap-toggle {
+  font-size: 12px;
+  color: #555;
+}
+.swap-toggle label {
+  cursor: pointer;
+  user-select: none;
+}
+.swap-toggle input {
+  margin-right: 4px;
+}
+
+.swap-close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #999;
+  padding: 0 4px;
+}
+.swap-close-btn:hover { color: #333; }
+
+.swap-body {
+  padding: 12px 18px 18px;
+}
+
+.swap-candidate-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.swap-candidate {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  transition: background 0.12s;
+}
+.swap-candidate:hover {
+  background: #e8f4fd;
+  border-color: #3498db;
+}
+.swap-candidate-period {
+  font-weight: 600;
+  min-width: 100px;
+  color: #2c3e50;
+}
+.swap-candidate-subject {
+  color: #2980b9;
+  flex: 1;
+}
+.swap-candidate-teacher {
+  color: #7f8c8d;
+  font-size: 12px;
+}
+
+/* Subject highlight mode */
+.subject-highlight-cell {
+  box-shadow: inset 0 0 0 3px #2980b9;
+  background: #eaf2f8;
+  cursor: pointer;
+}
+.subject-highlight-cell:hover {
+  box-shadow: inset 0 0 0 3px #1a5276;
+  background: #d4e6f1;
+}
+
+.swap-no-candidates {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+
+/* Teacher Summary table */
+.teacher-summary-table td.num {
+  text-align: center;
+  width: 40px;
+}
+.teacher-summary-table td.teacher-name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.teacher-summary-table td.grades-cell {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.teacher-summary-table td.total-cell {
+  font-weight: 700;
+  color: #2c3e50;
+  width: 60px;
+}
+
+</style>
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>School Timetable Generator</h1>
+    <div class="seed-group">
+      <label for="seed-input">Seed:</label>
+      <input type="text" id="seed-input" placeholder="Enter seed...">
+    </div>
+    <button class="btn btn-primary" id="generate-btn">Generate</button>
+    <button class="btn btn-secondary" id="export-btn">Export CSV</button>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-view="master">Master View</button>
+    <button class="tab-btn" data-view="class">Per-Class View</button>
+    <button class="tab-btn" data-view="teacher">Per-Teacher View</button>
+    <button class="tab-btn" data-view="free">Free Teachers</button>
+    <button class="tab-btn" data-view="summary">Subject Summary</button>
+    <button class="tab-btn" data-view="teacher-summary">Teacher Summary</button>
+  </nav>
+
+  <div class="status-bar">
+    <span id="status" class="status">Enter a seed and click Generate.</span>
+  </div>
+
+  <div id="view-content">
+    <p style="padding:20px;color:#888;">Click <strong>Generate</strong> to create the timetable.</p>
+  </div>
+
+  <div id="warnings"></div>
+
+  <script>
+// ============================================================
+// data.js — All data definitions for the timetable system
+// ============================================================
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+// Period definitions per grade group
+const PERIODS_3_10 = [
+  { id: 'P1', label: 'Period 1', start: '9:00', end: '9:40' },
+  { id: 'P2', label: 'Period 2', start: '9:40', end: '10:20' },
+  { id: 'P3', label: 'Period 3', start: '10:30', end: '11:10' },
+  { id: 'P4', label: 'Period 4', start: '11:10', end: '11:50' },
+  { id: 'P5', label: 'Period 5', start: '11:50', end: '12:30' },
+  { id: 'P6', label: 'Period 6', start: '1:00', end: '1:40' },
+  { id: 'P7', label: 'Period 7', start: '1:40', end: '2:20' },
+  { id: 'P8', label: 'Period 8', start: '2:20', end: '3:00' }
+];
+
+const PERIODS_1_2_11_12 = [
+  { id: 'P1', label: 'Period 1', start: '9:00', end: '9:40' },
+  { id: 'P2', label: 'Period 2', start: '9:40', end: '10:20' },
+  { id: 'P3', label: 'Period 3', start: '10:30', end: '11:10' },
+  { id: 'P4', label: 'Period 4', start: '11:10', end: '11:50' },
+  { id: 'P5', label: 'Period 5', start: '11:50', end: '12:30' },
+  { id: 'P6', label: 'Period 6', start: '1:00', end: '1:40' }
+];
+
+const PERIODS_3_10_SAT = PERIODS_3_10.slice(0, 6);
+const PERIODS_1_2_SAT = PERIODS_1_2_11_12.slice(0, 5);
+const PERIODS_11_12_SAT = PERIODS_1_2_11_12.slice(0, 5);
+
+// ============================================================
+// CLASS DEFINITIONS
+// ============================================================
+
+const CLASSES = [
+  { id: '1S', grade: 1, name: '1st', division: 'S', periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '1-2' },
+  { id: '1M', grade: 1, name: '1st', division: 'M', periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '1-2' },
+  { id: '2S', grade: 2, name: '2nd', division: 'S', periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '1-2' },
+  { id: '2M', grade: 2, name: '2nd', division: 'M', periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '1-2' },
+  { id: '3S', grade: 3, name: '3rd', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '3M', grade: 3, name: '3rd', division: 'M', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '4S', grade: 4, name: '4th', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '5S', grade: 5, name: '5th', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '5M', grade: 5, name: '5th', division: 'M', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '6S', grade: 6, name: '6th', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '7S', grade: 7, name: '7th', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '7M', grade: 7, name: '7th', division: 'M', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '8S', grade: 8, name: '8th', division: 'S', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '8M', grade: 8, name: '8th', division: 'M', periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '9',  grade: 9, name: '9th', division: null, periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '10', grade: 10, name: '10th', division: null, periodsWeekday: 8, periodsSat: 6, totalWeek: 46, group: '3-10' },
+  { id: '11', grade: 11, name: '11th', division: null, periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '11-12', fixed: true },
+  { id: '12', grade: 12, name: '12th', division: null, periodsWeekday: 6, periodsSat: 5, totalWeek: 35, group: '11-12', fixed: true }
+];
+
+// ============================================================
+// SUBJECT SESSIONS PER WEEK PER CLASS
+// All totals: Grades 1-2 = 35, Grades 3-10 = 46, Grades 11-12 = 35 (fixed)
+// ============================================================
+
+function getSubjectsForClass(classId) {
+  const cls = CLASSES.find(c => c.id === classId);
+  if (!cls) return {};
+
+  const g = cls.grade;
+
+  // Grades 1-2: 35 sessions/week
+  if (g === 1 || g === 2) {
+    return {
+      'English': 5, 'Maths': 5, 'Hindi': 4, 'Marathi': 3,
+      'Computer': 3, 'EVS': 2, 'Phonics': 2,
+      'Art': 2, 'Dance/Gymnastics': 2,
+      'PE': 1, 'MPT': 2
+    };
+  }
+
+  // Grade 3: 46 sessions/week
+  if (g === 3) {
+    return {
+      'English': 5, 'Maths': 5, 'EVS': 5, 'Hindi': 4, 'Marathi': 4,
+      'Computer': 4, 'Speaking Skills': 2,
+      'Chess': 2, 'Art': 2, 'Dance/Gymnastics': 2,
+      'Cricket/BB': 1, 'PE': 1, 'MPT': 2, 'Khel Yoga': 1
+    };
+  }
+
+  // Grade 4: 46 sessions/week (EVS replaces Science/SST, taught by Ekta)
+  if (g === 4) {
+    return {
+      'English': 5, 'Maths': 5, 'EVS': 5, 'Hindi': 4, 'Marathi': 4,
+      'Computer': 4,
+      'Chess': 2, 'Art': 2, 'Dance/Gymnastics': 2,
+      'Cricket/BB': 1, 'PE': 1, 'MPT': 2, 'Khel Yoga': 1
+    };
+  }
+
+  // Grade 5: 46 sessions/week
+  if (g === 5) {
+    return {
+      'English': 5, 'Maths': 5, 'Science': 4, 'Hindi': 4, 'Marathi': 4,
+      'Computer': 4, 'Phonics': 2,
+      'Chess': 2, 'Art': 2, 'Dance/Gymnastics': 2,
+      'Cricket/BB': 1, 'PE': 1, 'MPT': 2, 'Khel Yoga': 1
+    };
+  }
+
+  // Grades 6-8: 46 sessions/week
+  if (g >= 6 && g <= 8) {
+    return {
+      'English': 5, 'Maths': 5, 'Science': 5, 'Social Studies': 5,
+      'Hindi': 4, 'Marathi': 4, 'Computer': 4,
+      'Art': 2, 'Dance/Gymnastics': 1,
+      'Cricket/BB': 1, 'PE': 1, 'MPT': 2,
+      'Kushal Bodh': 1, 'Khel Yatra': 1
+    };
+  }
+
+  // Grade 9: 46 sessions/week
+  if (g === 9) {
+    return {
+      'English': 5, 'Maths': 5, 'Physics': 5, 'Chemistry': 5,
+      'Biology': 3, 'Social Studies': 5, 'Hindi/Marathi': 4,
+      'Computer': 2, 'Art': 1, 'PE': 1, 'MPT': 1,
+      'Chess': 2
+    };
+  }
+
+  // Grade 10: 46 sessions/week
+  if (g === 10) {
+    return {
+      'English': 5, 'Maths': 5, 'Physics': 5, 'Chemistry': 5,
+      'Biology': 3, 'Social Studies': 5, 'Hindi/Marathi': 5,
+      'Computer': 2, 'Art': 1, 'PE': 1, 'MPT': 1
+    };
+  }
+
+  return {};
+}
+
+// ============================================================
+// TEACHER DEFINITIONS
+// ============================================================
+
+const TEACHERS = [
+  {
+    id: 'bundele', name: 'Bundele Miss',
+    assignments: [
+      { subject: 'Hindi', classIds: ['1S', '1M', '2S', '2M'], sessions: 12 },
+      { subject: 'Art', classIds: ['1S', '1M', '2S', '2M'], sessions: 8 },
+      { subject: 'MPT', classIds: ['1S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'vaishali', name: 'Vaishali Miss',
+    assignments: [
+      { subject: 'English', classIds: ['1S', '1M'], sessions: 10 },
+      { subject: 'Maths', classIds: ['1S', '1M'], sessions: 10 },
+      { subject: 'EVS', classIds: ['1S', '1M'], sessions: 4 },
+      { subject: 'Phonics', classIds: ['1S', '1M'], sessions: 4 },
+      { subject: 'MPT', classIds: ['1M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'prajakta', name: 'Prajakta Miss',
+    assignments: [
+      { subject: 'Hindi', classIds: ['2S', '3S', '3M', '4S', '5S', '5M'], sessions: 20 },
+      { subject: 'Marathi', classIds: ['1S', '1M'], sessions: 6 },
+      { subject: 'MPT', classIds: ['2S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'shobha', name: 'Shobha Miss',
+    assignments: [
+      { subject: 'Maths', classIds: ['2S', '2M', '3S', '3M'], sessions: 18 },
+      { subject: 'English', classIds: ['2S', '2M'], sessions: 8 },
+      { subject: 'EVS', classIds: ['2S', '2M'], sessions: 4 },
+      { subject: 'MPT', classIds: ['2M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'jayashree', name: 'Jayashree Miss',
+    assignments: [
+      { subject: 'Marathi', classIds: ['2S', '2M', '3S', '3M', '4S', '5S', '5M'], sessions: 26 },
+      { subject: 'MPT', classIds: ['3S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'shivali', name: 'Shivali Miss',
+    assignments: [
+      { subject: 'EVS', classIds: ['3S', '3M'], sessions: 10 },
+      { subject: 'English', classIds: ['3S', '3M'], sessions: 10 },
+      { subject: 'Speaking Skills', classIds: ['3S', '3M'], sessions: 4 },
+      { subject: 'MPT', classIds: ['3M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'ekta', name: 'Ekta Miss',
+    assignments: [
+      { subject: 'Computer', classIds: ['1S', '1M', '2S', '2M'], sessions: 12 },
+      { subject: 'English', classIds: ['4S'], sessions: 5 },
+      { subject: 'EVS', classIds: ['4S'], sessions: 5 },
+      { subject: 'Phonics', classIds: ['5S', '5M'], sessions: 4 },
+      { subject: 'MPT', classIds: ['4S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'ashwini', name: 'Ashwini Miss',
+    assignments: [
+      { subject: 'Maths', classIds: ['4S', '5S', '5M', '6S'], sessions: 20 },
+      { subject: 'MPT', classIds: ['5S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'khushi', name: 'Khushi (IT Teacher)',
+    assignments: [
+      { subject: 'Computer', classIds: ['6S'], sessions: 4 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'shital', name: 'Shital Miss',
+    assignments: [
+      { subject: 'Marathi', classIds: ['6S', '7S', '7M', '8S', '8M', '9', '10'], sessions: 30 },
+      { subject: 'MPT', classIds: ['7M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'kalpana', name: 'Kalpana Miss',
+    assignments: [
+      { subject: 'Hindi', classIds: ['6S', '7S', '7M', '8S', '8M', '9', '10'], sessions: 30 },
+      { subject: 'MPT', classIds: ['6S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'rathor', name: 'Rathor Miss',
+    assignments: [
+      { subject: 'English', classIds: ['6S'], sessions: 5 },
+      { subject: 'Maths', classIds: ['7S', '7M', '8S', '8M'], sessions: 20 },
+      { subject: 'MPT', classIds: ['7S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'swapna', name: 'Swapna Miss',
+    assignments: [
+      { subject: 'Social Studies', classIds: ['6S'], sessions: 5 },
+      { subject: 'English', classIds: ['5S', '5M', '7S', '7M'], sessions: 20 },
+      { subject: 'MPT', classIds: ['5M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'soham', name: 'Soham Sir',
+    assignments: [
+      { subject: 'Art', classIds: ['3S', '3M', '4S', '5S', '5M', '6S', '7S', '7M', '8S', '8M', '9', '10'], sessions: 22 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'chordiya', name: 'Chordiya Sir',
+    assignments: [
+      { subject: 'Chess', classIds: ['3S', '3M', '4S', '5S', '5M', '6S', '7S', '7M', '8S', '8M', '9', '10'], sessions: 19 }
+    ],
+    dayRestrictions: ['Monday', 'Tuesday']
+  },
+  {
+    id: 'priyanka_balaji', name: 'Priyanka (Balaji)',
+    assignments: [
+      { subject: 'Computer', classIds: ['3S', '3M', '5S', '5M'], sessions: 16 },
+      { subject: 'Computer', classIds: ['9', '10'], sessions: 8 },
+      { subject: 'MPT', classIds: ['8S'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'priyanka_auti', name: 'Priyanka Auti',
+    assignments: [
+      { subject: 'Computer', classIds: ['4S', '7S', '7M', '8S', '8M'], sessions: 20 },
+      { subject: 'Computer', classIds: ['11', '12'], sessions: 4 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'beauty', name: 'Beauty Miss',
+    assignments: [
+      { subject: 'English', classIds: ['8S', '8M', '9', '10', '11', '12'], sessions: 26 },
+      { subject: 'MPT', classIds: ['8M'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'rushikant', name: 'Rushikant Sir',
+    assignments: [
+      { subject: 'Maths', classIds: ['9', '10', '11', '12'], sessions: 24 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'sudarshan', name: 'Sudarshan Sir',
+    assignments: [
+      { subject: 'Physics', classIds: ['9', '10', '11', '12'], sessions: 16 },
+      { subject: 'PE', classIds: ['12'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'sayali', name: 'Sayali Miss',
+    assignments: [
+      { subject: 'Chemistry', classIds: ['9', '10', '11', '12'], sessions: 16 },
+      { subject: 'Science', classIds: ['8S', '8M'], sessions: 10 },
+      { subject: 'PE', classIds: ['11'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'suvarna', name: 'Suvarna Miss',
+    assignments: [
+      { subject: 'Biology', classIds: ['11', '12'], sessions: 10 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'shivani', name: 'Shivani Miss',
+    assignments: [
+      { subject: 'Biology', classIds: ['9', '10'], sessions: 6 },
+      { subject: 'Science', classIds: ['5S', '5M', '6S', '7S', '7M'], sessions: 23 },
+      { subject: 'MPT', classIds: ['9'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'sandip', name: 'Sandip Sir',
+    assignments: [
+      { subject: 'Social Studies', classIds: ['7S', '7M', '8S', '8M', '9', '10'], sessions: 30 },
+      { subject: 'MPT', classIds: ['10'], sessions: 2 }
+    ],
+    dayRestrictions: null
+  },
+  {
+    id: 'pawan', name: 'Pawan Sir',
+    assignments: [
+      { subject: 'Dance/Gymnastics', classIds: ['1S', '1M', '2S', '2M', '3S', '3M', '4S', '5S', '5M', '6S', '7S', '7M', '8S', '8M'], sessions: 23 }
+    ],
+    dayRestrictions: ['Monday', 'Tuesday', 'Wednesday']
+  },
+  {
+    id: 'cricket_coach', name: 'Cricket/BB Coach',
+    assignments: [
+      { subject: 'Cricket/BB', classIds: ['1S', '1M', '2S', '2M', '3S', '3M', '4S', '5S', '5M', '6S', '7S', '7M', '8S', '8M'], sessions: 20 }
+    ],
+    dayRestrictions: ['Tuesday', 'Wednesday', 'Thursday', 'Friday']
+  },
+  {
+    id: 'pe_sir', name: 'PE Sir',
+    assignments: [
+      { subject: 'PE', classIds: ['1S', '1M', '2S', '2M', '3S', '3M', '4S', '5S', '5M', '6S', '7S', '7M', '8S', '8M', '9', '10'], sessions: 16 },
+      { subject: 'Khel Yoga', classIds: ['3S', '3M', '4S', '5S', '5M'], sessions: 10 }
+    ],
+    dayRestrictions: null
+  },
+];
+
+// ============================================================
+// CLASS TEACHER ALLOCATION
+// ============================================================
+
+const CLASS_TEACHERS = {
+  '1S': 'bundele',
+  '1M': 'vaishali',
+  '2S': 'prajakta',
+  '2M': 'shobha',
+  '3S': 'jayashree',
+  '3M': 'shivali',
+  '4S': 'ekta',
+  '5S': 'ashwini',
+  '5M': 'swapna',
+  '6S': 'kalpana',
+  '7S': 'rathor',
+  '7M': 'shital',
+  '8S': 'priyanka_balaji',
+  '8M': 'beauty',
+  '9': 'shivani',
+  '10': 'sandip',
+  '11': 'sayali',
+  '12': 'sudarshan'
+};
+
+// ============================================================
+// FIXED GRADE 11 TIMETABLE
+// ============================================================
+
+const FIXED_11 = {
+  Monday: {
+    P1: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P2: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P3: { subject: 'IT/PE/C.S/BIO', teacher: 'priyanka_balaji', altTeachers: ['sayali', 'suvarna'], tags: ['combined'] },
+    P4: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P5: { subject: 'English', teacher: 'beauty', tags: [] }
+  },
+  Tuesday: {
+    P1: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P2: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P3: { subject: 'IT/PE/C.S/BIO', teacher: 'priyanka_balaji', altTeachers: ['sayali', 'suvarna'], tags: ['combined'] },
+    P4: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-MATH', teacher: 'rushikant', tags: [] }
+  },
+  Wednesday: {
+    P1: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P2: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P3: { subject: 'IT/PE/C.S/BIO', teacher: 'priyanka_balaji', altTeachers: ['sayali', 'suvarna'], tags: ['combined'] },
+    P4: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-CHEM', teacher: 'sayali', tags: [] }
+  },
+  Thursday: {
+    P1: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P2: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P3: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P4: { subject: 'English', teacher: 'beauty', tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-PHY', teacher: 'sudarshan', tags: [] }
+  },
+  Friday: {
+    P1: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P2: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P3: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P4: { subject: 'English', teacher: 'beauty', tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-PHY', teacher: 'sudarshan', tags: [] }
+  },
+  Saturday: {
+    P1: { subject: 'TEST', teacher: 'sudarshan', tags: ['test'] },
+    P2: { subject: 'TEST', teacher: 'suvarna', tags: ['test'] },
+    P3: { subject: 'PRACTICAL', teacher: 'sayali', tags: ['practical'], note: '1ST SAT-CHEM(SAYALI), 2ND SAT-PHY(SUDARSHAN)' },
+    P4: { subject: 'PRACTICAL', teacher: 'sudarshan', tags: ['practical'], note: '3RD SAT-BIO(SUVARNA)/MATH(RUSHIKANT)' },
+    P5: { subject: 'PRACTICAL', teacher: 'rushikant', tags: ['practical'] }
+  }
+};
+
+// ============================================================
+// FIXED GRADE 12 TIMETABLE
+// ============================================================
+
+const FIXED_12 = {
+  Monday: {
+    P1: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P2: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P3: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P4: { subject: 'English [E]', teacher: 'beauty', tags: ['extra'] },
+    P5: { subject: 'IT/PE', teacher: 'priyanka_balaji', altTeachers: ['sudarshan'], tags: [] }
+  },
+  Tuesday: {
+    P1: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P2: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P3: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P4: { subject: 'English [E]', teacher: 'beauty', tags: ['extra'] },
+    P5: { subject: 'MCQ/DOUBT SESS-PHY', teacher: 'sudarshan', tags: [] }
+  },
+  Wednesday: {
+    P1: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P2: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P3: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P4: { subject: 'English [E]', teacher: 'beauty', tags: ['extra'] },
+    P5: { subject: 'MCQ/DOUBT SESS-MATH', teacher: 'rushikant', tags: [] }
+  },
+  Thursday: {
+    P1: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P2: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P3: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P4: { subject: 'IT/PE', teacher: 'priyanka_balaji', altTeachers: ['sudarshan'], tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-CHEM', teacher: 'sayali', tags: [] }
+  },
+  Friday: {
+    P1: { subject: 'Maths/BIO', teacher: 'rushikant', tags: [] },
+    P2: { subject: 'Chemistry', teacher: 'sayali', tags: [] },
+    P3: { subject: 'Physics', teacher: 'sudarshan', tags: [] },
+    P4: { subject: 'IT/PE', teacher: 'priyanka_balaji', altTeachers: ['sudarshan'], tags: [] },
+    P5: { subject: 'MCQ/DOUBT SESS-PHY', teacher: 'sudarshan', tags: [] }
+  },
+  Saturday: {
+    P1: { subject: 'TEST', teacher: 'rushikant', tags: ['test'] },
+    P2: { subject: 'TEST', teacher: 'sayali', tags: ['test'] },
+    P3: { subject: 'PRACTICAL', teacher: 'sayali', tags: ['practical'], note: '2ST SAT-CHEM(SAYALI)' },
+    P4: { subject: 'PRACTICAL', teacher: 'sudarshan', tags: ['practical'], note: '3RD SAT-PHY(SUDARSHAN)' },
+    P5: { subject: 'PRACTICAL', teacher: 'rushikant', tags: ['practical'], note: '11T SAT-BIO(SUVARNA)/MATH(RUSHIKANT)' }
+  }
+};
+
+// ============================================================
+// COMBINED CRICKET/BB LECTURES
+// New approach: all classes in a group get same period
+// ============================================================
+
+const COMBINED_CRICKET = [
+  { day: 'Tuesday', classIds: ['3S', '3M', '4S'], subject: 'Cricket/BB' },
+  { day: 'Wednesday', classIds: ['5S', '5M', '6S'], subject: 'Cricket/BB' },
+  { day: 'Thursday', classIds: ['7S', '7M'], subject: 'Cricket/BB' },
+  { day: 'Friday', classIds: ['8S', '8M'], subject: 'Cricket/BB' }
+];
+
+// ============================================================
+// SUBJECT PRIORITY for extra slots (higher = more priority)
+// ============================================================
+
+const SUBJECT_PRIORITY = {
+  'English': 10, 'Maths': 10, 'Physics': 9, 'Chemistry': 9,
+  'Biology': 8, 'Science': 8, 'EVS': 8, 'Social Studies': 8,
+  'Hindi': 7, 'Marathi': 7, 'Hindi/Marathi': 7,
+  'Computer': 6,
+  'Phonics': 5, 'Speaking Skills': 5,
+  'Chess': 3, 'Art': 3, 'Dance/Gymnastics': 3,
+  'Cricket/BB': 3, 'PE': 3,
+  'Khel Yoga': 3, 'Kushal Bodh': 3, 'Khel Yatra': 3, 'Hindi/Marathi': 3,
+  'Activity': 1, 'MPT': 2
+};
+
+// ============================================================
+// HELPER FUNCTIONS
+// ============================================================
+
+function getTeacherById(id) {
+  return TEACHERS.find(t => t.id === id);
+}
+
+function getClassById(id) {
+  return CLASSES.find(c => c.id === id);
+}
+
+function getClassTeacherId(classId) {
+  return CLASS_TEACHERS[classId] || null;
+}
+
+function getClassTeacherName(classId) {
+  const tid = getClassTeacherId(classId);
+  const t = getTeacherById(tid);
+  return t ? t.name : null;
+}
+
+function isClassTeacher(teacherId, classId) {
+  return getClassTeacherId(classId) === teacherId;
+}
+
+function getTeacherSessionTarget(teacherId) {
+  const t = getTeacherById(teacherId);
+  if (!t) return 0;
+  return t.assignments.reduce((sum, a) => sum + a.sessions, 0);
+}
+
+function getTeacherSubjects(teacherId) {
+  const t = getTeacherById(teacherId);
+  if (!t) return [];
+  return t.assignments.map(a => a.subject);
+}
+
+function getTeacherClasses(teacherId) {
+  const t = getTeacherById(teacherId);
+  if (!t) return [];
+  const classIds = new Set();
+  t.assignments.forEach(a => a.classIds.forEach(cid => classIds.add(cid)));
+  return [...classIds];
+}
+
+function isTeacherForClass(teacherId, classId, subject) {
+  const t = getTeacherById(teacherId);
+  if (!t) return false;
+  return t.assignments.some(a =>
+    a.subject === subject && a.classIds.includes(classId)
+  );
+}
+
+function getSubjectsForClassList(classId) {
+  return Object.keys(getSubjectsForClass(classId));
+}
+
+function getSessionsRequired(classId, subject) {
+  const subs = getSubjectsForClass(classId);
+  return subs[subject] || 0;
+}
+
+function getTeacherForSubject(subject, classId) {
+  for (const t of TEACHERS) {
+    for (const a of t.assignments) {
+      if (a.subject === subject && a.classIds.includes(classId)) {
+        return t.id;
+      }
+    }
+  }
+  return null;
+}
+
+function getAllDivisions(grade) {
+  return CLASSES.filter(c => c.grade === grade).map(c => c.id);
+}
+
+function getSaturdayPeriods(classId) {
+  const cls = getClassById(classId);
+  if (!cls) return [];
+  if (cls.group === '3-10') return PERIODS_3_10_SAT;
+  if (cls.group === '1-2') return PERIODS_1_2_SAT;
+  if (cls.group === '11-12') return PERIODS_11_12_SAT;
+  return [];
+}
+
+function getWeekdayPeriods(classId) {
+  const cls = getClassById(classId);
+  if (!cls) return [];
+  if (cls.group === '3-10') return PERIODS_3_10;
+  return PERIODS_1_2_11_12;
+}
+
+function formatTags(tags) {
+  if (!tags || tags.length === 0) return '';
+  return tags.map(t => {
+    switch (t) {
+      case 'extra': return '[E]';
+      case 'combined': return '[C]';
+      case 'test': return '[T]';
+      case 'practical': return '[P]';
+      case 'revision': return '[R]';
+      default: return '';
+    }
+  }).filter(Boolean).join(' ');
+}
+
+</script>
+  <script>
+// ============================================================
+// rng.js — Seeded pseudo-random number generator (Mulberry32)
+// Ensures reproducible timetables with the same seed
+// ============================================================
+
+class SeededRNG {
+  constructor(seed) {
+    this.state = this.hashSeed(seed);
+  }
+
+  hashSeed(seed) {
+    let h = 0;
+    const s = String(seed);
+    for (let i = 0; i < s.length; i++) {
+      h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+    }
+    return h >>> 0 || 1;
+  }
+
+  next() {
+    this.state += 0x6D2B79F5;
+    let t = this.state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
+  nextInt(min, max) {
+    return Math.floor(this.next() * (max - min + 1)) + min;
+  }
+
+  shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = this.nextInt(0, i);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+}
+
+</script>
+  <script>
+// ============================================================
+// solver.js — CSP Backtracking Timetable Generator
+// Fixes: B1, B2, B3, B4, B5, B6, B7, B8
+// ============================================================
+
+class TimetableSolver {
+  constructor(seed) {
+    this.rng = new SeededRNG(seed);
+    this.timetable = {};
+    // teacherSchedule[teacherId][day] = {} mapping periodId -> classId
+    this.teacherSchedule = {};
+    this.classDaySubjects = {};
+    this.subjectSessionCount = {};
+    this.teacherSessionCount = {};
+    this.extraSessions = {};
+    this.warnings = [];
+    this.errors = [];
+
+    CLASSES.forEach(c => {
+      this.timetable[c.id] = {};
+      this.classDaySubjects[c.id] = {};
+      this.subjectSessionCount[c.id] = {};
+      this.extraSessions[c.id] = {};
+
+      const subs = getSubjectsForClass(c.id);
+      Object.keys(subs).forEach(s => {
+        this.subjectSessionCount[c.id][s] = 0;
+      });
+
+      DAYS.forEach(d => {
+        this.timetable[c.id][d] = {};
+        this.classDaySubjects[c.id][d] = new Set();
+      });
+    });
+
+    TEACHERS.forEach(t => {
+      this.teacherSchedule[t.id] = {};
+      this.teacherSessionCount[t.id] = 0;
+      DAYS.forEach(d => {
+        // Map periodId -> classId for period-level conflict detection
+        this.teacherSchedule[t.id][d] = {};
+      });
+    });
+  }
+
+  solve() {
+    this.placeFixedTimetables();
+    this.placeMPTWednesday();
+    this.placeClassTeacherPeriod1();
+    this.placeMathsDaily();
+    this.placeCombinedCricket();
+    this.placeKhelYogaKushalBodhKhelYatra();
+    this.placeCombinedHindiMarathi();
+    this.fillRemainingSlots();
+    this.enforceGrade10Revision();
+    this.postVerifyAndFix();
+    this.verifyAll();
+    return {
+      timetable: this.timetable,
+      extraSessions: this.extraSessions,
+      warnings: this.warnings,
+      errors: this.errors,
+      teacherSchedule: this.teacherSchedule
+    };
+  }
+
+  // ---- Fixed Timetables (Grade 11 & 12) ----
+  placeFixedTimetables() {
+    ['11', '12'].forEach(cid => {
+      const fixed = cid === '11' ? FIXED_11 : FIXED_12;
+      DAYS.forEach(day => {
+        const periods = cid === '11'
+          ? (day === 'Saturday' ? PERIODS_11_12_SAT : PERIODS_1_2_11_12)
+          : (day === 'Saturday' ? PERIODS_11_12_SAT : PERIODS_1_2_11_12);
+        const dayData = fixed[day];
+        if (!dayData) return;
+        periods.forEach(p => {
+          const entry = dayData[p.id];
+          if (entry) {
+            this.timetable[cid][day][p.id] = {
+              subject: entry.subject,
+              teacher: entry.teacher,
+              altTeachers: entry.altTeachers || [],
+              tags: [...(entry.tags || [])],
+              note: entry.note || null
+            };
+            if (entry.teacher) {
+              this.teacherSchedule[entry.teacher][day][p.id] = cid;
+              this.teacherSessionCount[entry.teacher]++;
+            }
+            this.classDaySubjects[cid][day].add(entry.subject);
+          }
+        });
+      });
+    });
+  }
+
+  // ---- MPT on Wednesday Period 1 (and Period 2 for grades 1-8) ----
+  placeMPTWednesday() {
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      const sessionsNeeded = getSessionsRequired(cls.id, 'MPT');
+      if (sessionsNeeded <= 0) return;
+
+      const classTeacherId = getClassTeacherId(cls.id);
+      if (!classTeacherId) return;
+
+      // Wed Period 1 = MPT (all grades 1-10)
+      const wedP1 = 'P1';
+      if (this.isSlotFree(cls.id, 'Wednesday', wedP1)) {
+        if (this.canAssignTeacher(classTeacherId, 'Wednesday', wedP1, cls.id)) {
+          this.assignSlot(cls.id, 'Wednesday', wedP1, 'MPT', classTeacherId, ['mpt']);
+        }
+      }
+
+      // Grades 1-8: also Wed Period 2 = MPT
+      if (cls.grade >= 1 && cls.grade <= 8 && sessionsNeeded > 1) {
+        const wedP2 = 'P2';
+        if (this.isSlotFree(cls.id, 'Wednesday', wedP2)) {
+          if (this.canAssignTeacher(classTeacherId, 'Wednesday', wedP2, cls.id)) {
+            this.assignSlot(cls.id, 'Wednesday', wedP2, 'MPT', classTeacherId, ['mpt']);
+          }
+        }
+      }
+      // Mark MPT fully satisfied — no MPT on other days
+      this.subjectSessionCount[cls.id]['MPT'] = sessionsNeeded;
+    });
+  }
+
+  // ---- Class Teacher Period 1 (Mon-Fri AND Saturday, except Wed P1 is MPT) ----
+  placeClassTeacherPeriod1() {
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      const classTeacherId = getClassTeacherId(cls.id);
+      if (!classTeacherId) return;
+
+      const allDays = DAYS;
+      allDays.forEach(day => {
+        if (day === 'Wednesday') return;
+
+        const pid = 'P1';
+        if (!this.isSlotFree(cls.id, day, pid)) return;
+
+        // Find what subjects the class teacher can teach for this class
+        const ctSubjects = this.getTeacherSubjectsForClass(classTeacherId, cls.id);
+        if (ctSubjects.length === 0) return;
+
+        const shuffled = this.rng.shuffle(ctSubjects);
+        for (const subj of shuffled) {
+          const req = getSessionsRequired(cls.id, subj);
+          const done = this.subjectSessionCount[cls.id][subj] || 0;
+          if (done < req) {
+            if (this.canAssignTeacher(classTeacherId, day, pid, cls.id)) {
+              const tags = day === 'Saturday' ? ['extra'] : [];
+              this.assignSlot(cls.id, day, pid, subj, classTeacherId, tags);
+              break;
+            }
+          }
+        }
+      });
+    });
+  }
+
+  // ---- Combined Cricket/BB Lectures (SAME period for all combined classes) ----
+  placeCombinedCricket() {
+    COMBINED_CRICKET.forEach(cr => {
+      const day = cr.day;
+
+      // Find a common free period for all classes in the group
+      // where the cricket coach is also available
+      const commonPeriod = this.findCommonPeriod(cr.classIds, day, 'cricket_coach', 'Cricket/BB');
+      if (!commonPeriod) {
+        this.warnings.push(`No common period for combined Cricket/BB on ${day} for ${cr.classIds.join(',')}`);
+        return;
+      }
+
+      const pid = commonPeriod;
+      const tag = ['combined', 'combined:' + cr.classIds.join('+')];
+      cr.classIds.forEach((cid, idx) => {
+        if (this.isSlotFree(cid, day, pid)) {
+          if (idx === 0) {
+            // First class: normal assignment (updates teacher schedule + subject count)
+            this.assignSlot(cid, day, pid, 'Cricket/BB', 'cricket_coach', tag);
+          } else {
+            // Subsequent classes: share the same combined session (just subject count, no teacher schedule)
+            this.timetable[cid][day][pid] = { subject: 'Cricket/BB', teacher: 'cricket_coach', tags: tag };
+            this.classDaySubjects[cid][day].add('Cricket/BB');
+            this.subjectSessionCount[cid]['Cricket/BB'] = (this.subjectSessionCount[cid]['Cricket/BB'] || 0) + 1;
+          }
+        }
+      });
+    });
+  }
+
+  // ---- Khel Yoga (3-5 by PE Sir), Kushal Bodh (6-8 by class teacher), Khel Yatra (6-8 by class teacher) ----
+  // All placed on Saturday only
+  placeKhelYogaKushalBodhKhelYatra() {
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+
+      const kyReq = getSessionsRequired(cls.id, 'Khel Yoga');
+      if (kyReq > 0) {
+        const periods = this.getSaturdayPeriodsList(cls.id);
+        for (const pid of periods) {
+          if (!this.isSlotFree(cls.id, 'Saturday', pid)) continue;
+          const teacherId = this.findBestTeacher('Khel Yoga', cls.id, 'Saturday', pid);
+          if (teacherId && this.canAssignTeacher(teacherId, 'Saturday', pid, cls.id)) {
+            this.assignSlot(cls.id, 'Saturday', pid, 'Khel Yoga', teacherId, []);
+            break;
+          }
+        }
+      }
+
+      const kbReq = getSessionsRequired(cls.id, 'Kushal Bodh');
+      if (kbReq > 0) {
+        const ctId = getClassTeacherId(cls.id);
+        if (ctId) {
+          const periods = this.getSaturdayPeriodsList(cls.id);
+          for (const pid of periods) {
+            if (!this.isSlotFree(cls.id, 'Saturday', pid)) continue;
+            if (this.canAssignTeacher(ctId, 'Saturday', pid, cls.id)) {
+              this.assignSlot(cls.id, 'Saturday', pid, 'Kushal Bodh', ctId, []);
+              break;
+            }
+          }
+        }
+      }
+
+      const ky2Req = getSessionsRequired(cls.id, 'Khel Yatra');
+      if (ky2Req > 0) {
+        const ctId = getClassTeacherId(cls.id);
+        if (ctId) {
+          const periods = this.getSaturdayPeriodsList(cls.id);
+          for (const pid of periods) {
+            if (!this.isSlotFree(cls.id, 'Saturday', pid)) continue;
+            if (this.canAssignTeacher(ctId, 'Saturday', pid, cls.id)) {
+              this.assignSlot(cls.id, 'Saturday', pid, 'Khel Yatra', ctId, []);
+              break;
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ---- Hindi/Marathi simultaneous (grades 9-10) ----
+  // Each slot offers both options; teacher=kalpana, altTeachers=shital
+  placeCombinedHindiMarathi() {
+    ['9', '10'].forEach(classId => {
+      const req = getSessionsRequired(classId, 'Hindi/Marathi');
+      if (req <= 0) return;
+
+      let placed = 0;
+      const days = this.rng.shuffle([...DAYS]);
+      const usedDays = [];
+      for (const day of days) {
+        if (placed >= req) break;
+        if (usedDays.includes(day)) continue;
+        const periods = this.getAvailablePeriodsForClass(classId, day);
+        for (const pid of periods) {
+          if (placed >= req) break;
+          if (!this.isSlotFree(classId, day, pid)) continue;
+          if (this.canAssignTeacher('kalpana', day, pid, classId) &&
+              this.canAssignTeacher('shital', day, pid, classId)) {
+            this.assignSlot(classId, day, pid, 'Hindi/Marathi', 'kalpana', ['combined']);
+            this.timetable[classId][day][pid].altTeachers = ['shital'];
+            this.teacherSchedule['shital'][day][pid] = classId;
+            this.teacherSessionCount['shital'] = (this.teacherSessionCount['shital'] || 0) + 1;
+            usedDays.push(day);
+            placed++;
+            break; // only one slot per day
+          }
+        }
+      }
+      if (placed < req) {
+        this.warnings.push(`${classId}: Could only place ${placed}/${req} Hindi/Marathi sessions`);
+      }
+    });
+  }
+
+  fillSubjectWithTeacher(classId, subject, count, teacherId) {
+    const days = this.rng.shuffle([...DAYS]);
+    let placed = 0;
+    for (const day of days) {
+      const periods = this.getAvailablePeriodsForClass(classId, day);
+      for (const pid of periods) {
+        if (placed >= count) return;
+        if (!this.isSlotFree(classId, day, pid)) continue;
+        if (this.canAssignTeacher(teacherId, day, pid, classId)) {
+          this.assignSlot(classId, day, pid, subject, teacherId, []);
+          placed++;
+        }
+      }
+    }
+    if (placed < count) {
+      this.warnings.push(`${classId}: Could only place ${placed}/${count} ${subject} sessions`);
+    }
+  }
+
+  fillSubjectSessions(classId, subject, count) {
+    const days = this.rng.shuffle([...DAYS]);
+    let placed = 0;
+    for (const day of days) {
+      const periods = this.getAvailablePeriodsForClass(classId, day);
+      for (const pid of periods) {
+        if (placed >= count) return;
+        if (!this.isSlotFree(classId, day, pid)) continue;
+        const teacherId = this.findBestTeacher(subject, classId, day, pid);
+        if (teacherId) {
+          this.assignSlot(classId, day, pid, subject, teacherId, []);
+          placed++;
+        }
+      }
+    }
+    if (placed < count) {
+      this.warnings.push(`${classId}: Could only place ${placed}/${count} ${subject} sessions`);
+    }
+  }
+
+  // ---- Fill Remaining Slots ----
+  fillRemainingSlots() {
+    const classesToFill = CLASSES.filter(c => !c.fixed);
+
+    // Sort by most constrained first (fewest filled slots)
+    classesToFill.sort((a, b) => {
+      const aFilled = this.countFilledSlots(a.id);
+      const bFilled = this.countFilledSlots(b.id);
+      return aFilled - bFilled;
+    });
+
+    for (const cls of classesToFill) {
+      this.fillClassSlots(cls.id);
+    }
+  }
+
+  fillClassSlots(classId) {
+    const sessionsNeeded = getSubjectsForClass(classId);
+    const subjects = Object.keys(sessionsNeeded);
+
+    for (const day of DAYS) {
+      const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+
+      for (const pid of periods) {
+        if (!this.isSlotFree(classId, day, pid)) continue;
+
+        // Find valid subjects for this slot
+        const candidates = this.getValidSubjectsForSlot(classId, day, pid, subjects, sessionsNeeded);
+        if (candidates.length === 0) {
+          this.assignExtraSlot(classId, day, pid);
+          continue;
+        }
+
+        const subj = candidates[0];
+        const teacherId = this.findBestTeacher(subj, classId, day, pid);
+
+        if (teacherId) {
+          this.assignSlot(classId, day, pid, subj, teacherId, []);
+        } else {
+          this.assignExtraSlot(classId, day, pid);
+        }
+      }
+    }
+  }
+
+  getValidSubjectsForSlot(classId, day, pid, subjects, sessionsNeeded) {
+    const dayUsed = this.classDaySubjects[classId][day];
+
+    const candidates = subjects.filter(subj => {
+      const req = sessionsNeeded[subj];
+      const done = this.subjectSessionCount[classId][subj] || 0;
+      if (done >= req) return false;
+      if (dayUsed.has(subj)) return false;
+
+      // Check if a teacher exists and is available
+      const teachers = this.findTeachersForSubject(subj, classId);
+      const available = teachers.some(tid => this.canAssignTeacher(tid, day, pid, classId));
+      if (!available) return false;
+
+      return true;
+    });
+
+    // Sort: prefer academic priority, then fewer remaining
+    candidates.sort((a, b) => {
+      const aPri = SUBJECT_PRIORITY[a] || 0;
+      const bPri = SUBJECT_PRIORITY[b] || 0;
+      if (aPri !== bPri) return bPri - aPri;
+      const aRem = sessionsNeeded[a] - (this.subjectSessionCount[classId][a] || 0);
+      const bRem = sessionsNeeded[b] - (this.subjectSessionCount[classId][b] || 0);
+      return aRem - bRem;
+    });
+
+    return this.rng.shuffle(candidates);
+  }
+
+  assignExtraSlot(classId, day, pid) {
+    const subs = Object.keys(getSubjectsForClass(classId));
+    const dayUsed = this.classDaySubjects[classId][day];
+
+    // Count subject occurrences today (limit: max 2 per day)
+    const subjectCountToday = {};
+    const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+    periods.forEach(p => {
+      const e = this.timetable[classId][day][p.id];
+      if (e) subjectCountToday[e.subject] = (subjectCountToday[e.subject] || 0) + 1;
+    });
+
+    // Priority order: academic subjects with remaining capacity but different day
+    const sortedSubs = [...subs].sort((a, b) => {
+      const aPri = SUBJECT_PRIORITY[a] || 0;
+      const bPri = SUBJECT_PRIORITY[b] || 0;
+      return bPri - aPri;
+    });
+
+    // Helper: skip subjects that already met their required count or exceed per-day limit
+    const canPlace = (subj) => {
+      if ((subjectCountToday[subj] || 0) >= 2) return false;
+      const req = getSessionsRequired(classId, subj);
+      const done = this.subjectSessionCount[classId][subj] || 0;
+      return done < req;
+    };
+
+    // First pass: try subjects not yet done today with available teachers
+    for (const subj of sortedSubs) {
+      if (!canPlace(subj)) continue;
+      if (!dayUsed.has(subj)) {
+        const teacherId = this.findBestTeacher(subj, classId, day, pid);
+        if (teacherId) {
+          this.assignSlot(classId, day, pid, subj, teacherId, ['extra']);
+          return;
+        }
+      }
+    }
+
+    // Second pass: allow same-subject-in-day for extras
+    for (const subj of sortedSubs) {
+      if (!canPlace(subj)) continue;
+      const teacherId = this.findBestTeacher(subj, classId, day, pid);
+      if (teacherId) {
+        this.assignSlot(classId, day, pid, subj, teacherId, ['extra']);
+        return;
+      }
+    }
+
+    // Last resort: any subject with any available teacher (allow same-day duplicates)
+    for (const subj of sortedSubs) {
+      if (!canPlace(subj)) continue;
+      const teachers = this.findTeachersForSubject(subj, classId);
+      for (const tid of teachers) {
+        if (this.canAssignTeacher(tid, day, pid, classId)) {
+          this.assignSlot(classId, day, pid, subj, tid, ['extra']);
+          return;
+        }
+      }
+    }
+
+    // Truly last resort: any teacher who is free this period, any subject
+    for (const t of TEACHERS) {
+      if (t.dayRestrictions && !t.dayRestrictions.includes(day)) continue;
+      if (!this.teacherSchedule[t.id][day][pid]) {
+        // Pick any subject this teacher teaches for this class
+        for (const a of t.assignments) {
+          if (a.classIds.includes(classId)) {
+            this.assignSlot(classId, day, pid, a.subject, t.id, ['extra']);
+            return;
+          }
+        }
+      }
+    }
+
+    // Absolute last resort: mark as free (should never happen with correct data)
+    this.timetable[classId][day][pid] = {
+      subject: 'Free Period',
+      teacher: null,
+      tags: ['extra']
+    };
+    this.warnings.push(`Empty slot: ${classId} ${day} ${pid} (no teacher available)`);
+  }
+
+  // ---- Grade 10: Last period each day = unique subjects tagged revision ----
+  // Run after fillRemainingSlots - swaps duplicates to ensure uniqueness
+  enforceGrade10Revision() {
+    const classId = '10';
+
+    // Collect all last period entries
+    const lastSlots = {};
+    DAYS.forEach(day => {
+      const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+      lastSlots[day] = periods[periods.length - 1];
+    });
+
+    // Build a map of subject → days to detect dupes
+    let subjectDays = {};
+    DAYS.forEach(day => {
+      const pid = lastSlots[day];
+      const entry = this.timetable[classId][day][pid];
+      if (entry) {
+        if (!subjectDays[entry.subject]) subjectDays[entry.subject] = [];
+        subjectDays[entry.subject].push(day);
+      }
+    });
+
+    // Try up to 2 passes to resolve duplicates
+    for (let pass = 0; pass < 2; pass++) {
+      let fixed = false;
+      for (const [subj, days] of Object.entries(subjectDays)) {
+        if (days.length <= 1) continue;
+
+        const fixDays = days.slice(1);
+        for (const day of fixDays) {
+          const pid = lastSlots[day];
+          const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+
+          // Find used subjects in last periods
+          const usedInLast = new Set();
+          Object.entries(lastSlots).forEach(([d, dp]) => {
+            const e = this.timetable[classId][d][dp];
+            if (e) usedInLast.add(e.subject);
+          });
+
+          let swapped = false;
+          for (const swapPid of periods) {
+            if (swapPid === pid) continue;
+            const swapEntry = this.timetable[classId][day][swapPid];
+            if (!swapEntry) continue;
+
+            // Skip if swap subject is also used in last periods (would create new dupe)
+            if (usedInLast.has(swapEntry.subject)) continue;
+
+            // Check teacher availability for swap
+            const thisEntry = this.timetable[classId][day][pid];
+            if (!thisEntry || !swapEntry) continue;
+            if (!this.canAssignTeacher(thisEntry.teacher, day, swapPid, classId)) continue;
+            if (!this.canAssignTeacher(swapEntry.teacher, day, pid, classId)) continue;
+
+            // Do the swap
+            subjectDays[subj] = subjectDays[subj].filter(d => d !== day);
+            if (subjectDays[subj].length === 0) delete subjectDays[subj];
+
+            if (thisEntry.teacher) delete this.teacherSchedule[thisEntry.teacher][day][pid];
+            if (swapEntry.teacher) delete this.teacherSchedule[swapEntry.teacher][day][swapPid];
+
+            this.timetable[classId][day][pid] = swapEntry;
+            this.timetable[classId][day][swapPid] = thisEntry;
+
+            if (swapEntry.teacher) this.teacherSchedule[swapEntry.teacher][day][pid] = classId;
+            if (thisEntry.teacher) this.teacherSchedule[thisEntry.teacher][day][swapPid] = classId;
+
+            const newSubj = this.timetable[classId][day][pid].subject;
+            if (!subjectDays[newSubj]) subjectDays[newSubj] = [];
+            subjectDays[newSubj].push(day);
+
+            swapped = true;
+            fixed = true;
+            break;
+          }
+
+          if (!swapped) {
+            // Fallback: swap with the FIRST period on this day that has a teacher available
+            for (const swapPid of periods) {
+              if (swapPid === pid) continue;
+              const swapEntry = this.timetable[classId][day][swapPid];
+              if (!swapEntry) continue;
+              const thisEntry = this.timetable[classId][day][pid];
+              if (!thisEntry || !swapEntry) continue;
+
+              // Check both directions; if either fails, skip
+              if (thisEntry.teacher && !this.canAssignTeacher(thisEntry.teacher, day, swapPid, classId)) continue;
+              if (swapEntry.teacher && !this.canAssignTeacher(swapEntry.teacher, day, pid, classId)) continue;
+
+              subjectDays[subj] = subjectDays[subj].filter(d => d !== day);
+              if (subjectDays[subj].length === 0) delete subjectDays[subj];
+
+              if (thisEntry.teacher) delete this.teacherSchedule[thisEntry.teacher][day][pid];
+              if (swapEntry.teacher) delete this.teacherSchedule[swapEntry.teacher][day][swapPid];
+
+              this.timetable[classId][day][pid] = swapEntry;
+              this.timetable[classId][day][swapPid] = thisEntry;
+
+              if (swapEntry.teacher) this.teacherSchedule[swapEntry.teacher][day][pid] = classId;
+              if (thisEntry.teacher) this.teacherSchedule[thisEntry.teacher][day][swapPid] = classId;
+
+              const newSubj = this.timetable[classId][day][pid].subject;
+              if (!subjectDays[newSubj]) subjectDays[newSubj] = [];
+              subjectDays[newSubj].push(day);
+
+              swapped = true;
+              fixed = true;
+              break;
+            }
+          }
+
+          if (!swapped) {
+            // Last resort: try a different day - swap this last period with a non-last period from another day
+            outer: for (const otherDay of DAYS) {
+              if (otherDay === day) continue;
+              const otherPeriods = otherDay === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+              const otherLastPid = lastSlots[otherDay];
+              for (const swapPid of otherPeriods) {
+                if (swapPid === otherLastPid) continue;
+                const thisEntry = this.timetable[classId][day][pid];
+                const swapEntry = this.timetable[classId][otherDay][swapPid];
+                if (!thisEntry || !swapEntry) continue;
+                if (!this.canAssignTeacher(thisEntry.teacher, otherDay, swapPid, classId)) continue;
+                if (!this.canAssignTeacher(swapEntry.teacher, day, pid, classId)) continue;
+
+                subjectDays[subj] = subjectDays[subj].filter(d => d !== day);
+                if (subjectDays[subj].length === 0) delete subjectDays[subj];
+
+                if (thisEntry.teacher) delete this.teacherSchedule[thisEntry.teacher][day][pid];
+                if (swapEntry.teacher) delete this.teacherSchedule[swapEntry.teacher][otherDay][swapPid];
+
+                this.timetable[classId][day][pid] = swapEntry;
+                this.timetable[classId][otherDay][swapPid] = thisEntry;
+
+                if (swapEntry.teacher) this.teacherSchedule[swapEntry.teacher][day][pid] = classId;
+                if (thisEntry.teacher) this.teacherSchedule[thisEntry.teacher][otherDay][swapPid] = classId;
+
+                const newSubj = this.timetable[classId][day][pid].subject;
+                if (!subjectDays[newSubj]) subjectDays[newSubj] = [];
+                subjectDays[newSubj].push(day);
+
+                swapped = true;
+                fixed = true;
+                break outer;
+              }
+            }
+          }
+        }
+      }
+      if (!fixed) break;
+      subjectDays = {}; // rebuild
+      DAYS.forEach(day => {
+        const p = lastSlots[day];
+        const e = this.timetable[classId][day][p];
+        if (e) {
+          if (!subjectDays[e.subject]) subjectDays[e.subject] = [];
+          subjectDays[e.subject].push(day);
+        }
+      });
+    }
+
+    // Final cleanup: if any last-period subject still appears more than once,
+    // directly reassign the extras to unused subjects
+    const lastSubjects = {};
+    DAYS.forEach(day => {
+      const pid = lastSlots[day];
+      const entry = this.timetable[classId][day][pid];
+      if (entry) {
+        if (!lastSubjects[entry.subject]) lastSubjects[entry.subject] = [];
+        lastSubjects[entry.subject].push(day);
+      }
+    });
+
+    for (const [subj, days] of Object.entries(lastSubjects)) {
+      if (days.length <= 1) continue;
+      for (let i = 1; i < days.length; i++) {
+        const day = days[i];
+        const pid = lastSlots[day];
+        const entry = this.timetable[classId][day][pid];
+        if (!entry) continue;
+
+        const needed = getSubjectsForClass(classId);
+        const candidates = Object.keys(needed).filter(s => {
+          if (s === subj) return false;
+          if (lastSubjects[s] && lastSubjects[s].length > 0) return false;
+          return (this.subjectSessionCount[classId][s] || 0) > 0;
+        });
+
+        if (candidates.length === 0) continue;
+
+        const replacementSubj = candidates[0];
+        let swapped = false;
+
+        const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+        for (const swapPid of periods) {
+          if (swapPid === pid) continue;
+          const swapEntry = this.timetable[classId][day][swapPid];
+          if (!swapEntry || swapEntry.subject !== replacementSubj) continue;
+          if (!this.canAssignTeacher(swapEntry.teacher, day, pid, classId)) continue;
+          if (!this.canAssignTeacher(entry.teacher, day, swapPid, classId)) continue;
+
+          if (entry.teacher) delete this.teacherSchedule[entry.teacher][day][pid];
+          if (swapEntry.teacher) delete this.teacherSchedule[swapEntry.teacher][day][swapPid];
+          this.timetable[classId][day][pid] = swapEntry;
+          this.timetable[classId][day][swapPid] = entry;
+          if (swapEntry.teacher) this.teacherSchedule[swapEntry.teacher][day][pid] = classId;
+          if (entry.teacher) this.teacherSchedule[entry.teacher][day][swapPid] = classId;
+
+          if (!lastSubjects[replacementSubj]) lastSubjects[replacementSubj] = [];
+          lastSubjects[replacementSubj].push(day);
+          swapped = true;
+          break;
+        }
+
+        if (!swapped) {
+          outer: for (const otherDay of DAYS) {
+            if (otherDay === day) continue;
+            const otherLastPid = lastSlots[otherDay];
+            const otherPeriods = otherDay === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+            for (const swapPid of otherPeriods) {
+              if (swapPid === otherLastPid) continue;
+              const swapEntry = this.timetable[classId][otherDay][swapPid];
+              if (!swapEntry || swapEntry.subject !== replacementSubj) continue;
+              if (!this.canAssignTeacher(swapEntry.teacher, day, pid, classId)) continue;
+              if (!this.canAssignTeacher(entry.teacher, otherDay, swapPid, classId)) continue;
+
+              if (entry.teacher) delete this.teacherSchedule[entry.teacher][day][pid];
+              if (swapEntry.teacher) delete this.teacherSchedule[swapEntry.teacher][otherDay][swapPid];
+              this.timetable[classId][day][pid] = swapEntry;
+              this.timetable[classId][otherDay][swapPid] = entry;
+              if (swapEntry.teacher) this.teacherSchedule[swapEntry.teacher][day][pid] = classId;
+              if (entry.teacher) this.teacherSchedule[entry.teacher][otherDay][swapPid] = classId;
+
+              if (!lastSubjects[replacementSubj]) lastSubjects[replacementSubj] = [];
+              lastSubjects[replacementSubj].push(day);
+              swapped = true;
+              break outer;
+            }
+          }
+        }
+      }
+    }
+
+    // Final fallback: if any duplicate remains, directly overwrite with a unique subject
+    // by copying a non-last period entry from any day
+    const finalLastSubjects = {};
+    DAYS.forEach(day => {
+      const p = lastSlots[day];
+      const e = this.timetable[classId][day][p];
+      if (e) {
+        if (!finalLastSubjects[e.subject]) finalLastSubjects[e.subject] = [];
+        finalLastSubjects[e.subject].push(day);
+      }
+    });
+    for (const [subj, days] of Object.entries(finalLastSubjects)) {
+      if (days.length <= 1) continue;
+      for (let i = 1; i < days.length; i++) {
+        const dupDay = days[i];
+        const dupPid = lastSlots[dupDay];
+        const dupEntry = this.timetable[classId][dupDay][dupPid];
+        if (!dupEntry) continue;
+
+        // Search all days for any non-last period with a subject not in last periods
+        let copied = false;
+        for (const srcDay of DAYS) {
+          if (copied) break;
+          const srcLastPid = lastSlots[srcDay];
+          const srcPeriods = srcDay === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+          for (const srcPid of srcPeriods) {
+            if (srcPid === srcLastPid) continue;
+            const srcEntry = this.timetable[classId][srcDay][srcPid];
+            if (!srcEntry) continue;
+            if (finalLastSubjects[srcEntry.subject]) continue; // skip if already used as revision
+            if (!this.canAssignTeacher(srcEntry.teacher, dupDay, dupPid, classId)) continue;
+            if (!this.canAssignTeacher(dupEntry.teacher, srcDay, srcPid, classId)) continue;
+
+            // Swap: dup last period ↔ src period
+            if (dupEntry.teacher) delete this.teacherSchedule[dupEntry.teacher][dupDay][dupPid];
+            if (srcEntry.teacher) delete this.teacherSchedule[srcEntry.teacher][srcDay][srcPid];
+            this.timetable[classId][dupDay][dupPid] = srcEntry;
+            this.timetable[classId][srcDay][srcPid] = dupEntry;
+            if (srcEntry.teacher) this.teacherSchedule[srcEntry.teacher][dupDay][dupPid] = classId;
+            if (dupEntry.teacher) this.teacherSchedule[dupEntry.teacher][srcDay][srcPid] = classId;
+
+            if (!finalLastSubjects[srcEntry.subject]) finalLastSubjects[srcEntry.subject] = [];
+            finalLastSubjects[srcEntry.subject].push(dupDay);
+            copied = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // Tag all last periods as revision (final pass)
+    DAYS.forEach(day => {
+      const pid = lastSlots[day];
+      const entry = this.timetable[classId][day][pid];
+      if (entry) {
+        if (!entry.tags) entry.tags = [];
+        if (!entry.tags.includes('revision')) entry.tags.push('revision');
+      }
+    });
+  }
+
+  // ---- Grade 9-10: Maths daily (Mon-Fri) — place BEFORE fill to ensure distribution ----
+  placeMathsDaily() {
+    ['9', '10'].forEach(classId => {
+      const mathsRequired = getSessionsRequired(classId, 'Maths');
+      if (mathsRequired < 5) return;
+
+      WEEKDAYS.forEach(day => {
+        // Find a free period on this day for Maths
+        const periods = this.getWeekdayPeriodsList(classId);
+        for (const pid of periods) {
+          if (!this.isSlotFree(classId, day, pid)) continue;
+          // Try Rushikant first (he's the Maths teacher for 9-10)
+          if (this.canAssignTeacher('rushikant', day, pid, classId)) {
+            this.assignSlot(classId, day, pid, 'Maths', 'rushikant', []);
+            break;
+          }
+          // Try any Maths teacher
+          const teacherId = this.findBestTeacher('Maths', classId, day, pid);
+          if (teacherId) {
+            this.assignSlot(classId, day, pid, 'Maths', teacherId, []);
+            break;
+          }
+        }
+      });
+    });
+  }
+
+  // ---- Post-Fill Verification and Fix ----
+  postVerifyAndFix() {
+    // Ensure all slots are filled (no nulls)
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      DAYS.forEach(day => {
+        const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(cls.id) : this.getWeekdayPeriodsList(cls.id);
+        periods.forEach(pid => {
+          if (!this.timetable[cls.id][day][pid]) {
+            this.assignExtraSlot(cls.id, day, pid);
+          }
+        });
+      });
+    });
+  }
+
+  // ---- Teacher Finding ----
+  findTeachersForSubject(subject, classId) {
+    const teachers = [];
+    for (const t of TEACHERS) {
+      for (const a of t.assignments) {
+        if (a.subject === subject && a.classIds.includes(classId)) {
+          teachers.push(t.id);
+          break;
+        }
+      }
+    }
+    return teachers;
+  }
+
+  findBestTeacher(subject, classId, day, pid) {
+    const candidates = this.findTeachersForSubject(subject, classId);
+    if (candidates.length === 0) return null;
+
+    // Filter by availability at (day, period) and day restrictions
+    const available = candidates.filter(tid => this.canAssignTeacher(tid, day, pid, classId));
+
+    if (available.length === 0) return null;
+
+    // Prefer teachers with fewer total sessions (balance load)
+    available.sort((a, b) => {
+      return this.teacherSessionCount[a] - this.teacherSessionCount[b];
+    });
+
+    return available[0];
+  }
+
+  canAssignTeacher(teacherId, day, pid, classId) {
+    const t = getTeacherById(teacherId);
+    if (!t) return false;
+    if (t.dayRestrictions && !t.dayRestrictions.includes(day)) return false;
+    const existing = this.teacherSchedule[teacherId][day][pid];
+    if (existing && existing !== classId) return false;
+    return true;
+  }
+
+  // ---- Common period finding for combined classes ----
+  findCommonPeriod(classIds, day, teacherId, subject) {
+    const periodSets = classIds.map(cid => {
+      const available = this.getAvailablePeriodsForClass(cid, day);
+      return new Set(available);
+    });
+
+    const first = periodSets[0];
+    if (!first) return null;
+
+    const candidates = [];
+    for (const pid of first) {
+      if (periodSets.every(s => s.has(pid))) {
+        // Also check teacher availability
+        if (this.canAssignTeacher(teacherId, day, pid, classIds[0])) {
+          candidates.push(pid);
+        }
+      }
+    }
+
+    if (candidates.length === 0) return null;
+    return this.rng.shuffle(candidates)[0];
+  }
+
+  // ---- Assignment ----
+  assignSlot(classId, day, pid, subject, teacherId, tags) {
+    // Clear old teacher's schedule entry if this slot was previously assigned
+    const oldEntry = this.timetable[classId][day][pid];
+    if (oldEntry && oldEntry.teacher && oldEntry.teacher !== teacherId) {
+      delete this.teacherSchedule[oldEntry.teacher][day][pid];
+      this.teacherSessionCount[oldEntry.teacher] = Math.max(0, (this.teacherSessionCount[oldEntry.teacher] || 0) - 1);
+    }
+
+    this.timetable[classId][day][pid] = {
+      subject: subject,
+      teacher: teacherId,
+      tags: tags || []
+    };
+
+    if (teacherId) {
+      this.teacherSchedule[teacherId][day][pid] = classId;
+      this.teacherSessionCount[teacherId] = (this.teacherSessionCount[teacherId] || 0) + 1;
+    }
+
+    this.classDaySubjects[classId][day].add(subject);
+    this.subjectSessionCount[classId][subject] = (this.subjectSessionCount[classId][subject] || 0) + 1;
+  }
+
+  isSlotFree(classId, day, pid) {
+    return !this.timetable[classId][day][pid];
+  }
+
+  // ---- Helpers ----
+  countFilledSlots(classId) {
+    let count = 0;
+    DAYS.forEach(day => {
+      const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+      periods.forEach(p => {
+        if (this.timetable[classId][day][p]) count++;
+      });
+    });
+    return count;
+  }
+
+  getAvailablePeriodsForClass(classId, day) {
+    const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(classId) : this.getWeekdayPeriodsList(classId);
+    return periods.filter(p => !this.timetable[classId][day][p]);
+  }
+
+  getWeekdayPeriodsList(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10.map(p => p.id);
+    return PERIODS_1_2_11_12.map(p => p.id);
+  }
+
+  getSaturdayPeriodsList(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10_SAT.map(p => p.id);
+    if (cls.group === '1-2') return PERIODS_1_2_SAT.map(p => p.id);
+    if (cls.group === '11-12') return PERIODS_11_12_SAT.map(p => p.id);
+    return [];
+  }
+
+  getTeacherSubjectsForClass(teacherId, classId) {
+    const t = getTeacherById(teacherId);
+    if (!t) return [];
+    const subjects = [];
+    t.assignments.forEach(a => {
+      if (a.classIds.includes(classId)) subjects.push(a.subject);
+    });
+    return [...new Set(subjects)];
+  }
+
+  // ---- Verification ----
+  verifyAll() {
+    // Check all slots are filled
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      DAYS.forEach(day => {
+        const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(cls.id) : this.getWeekdayPeriodsList(cls.id);
+        periods.forEach(pid => {
+          if (!this.timetable[cls.id][day][pid]) {
+            this.errors.push(`Empty slot: ${cls.id} ${day} ${pid}`);
+          }
+        });
+      });
+    });
+
+    // Check session counts
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      const needed = getSubjectsForClass(cls.id);
+      Object.keys(needed).forEach(subj => {
+        const req = needed[subj];
+        const done = this.subjectSessionCount[cls.id][subj] || 0;
+        if (done < req) {
+          this.warnings.push(`${cls.id}: ${subj} needs ${req} but got ${done} (short ${req - done})`);
+        }
+      });
+    });
+
+    // Check teacher double-booking at period level
+    // Skip fixed classes (grade 11/12) as their conflicts are by design
+    const isFixed = (classId) => { const c = getClassById(classId); return c && c.fixed; };
+    TEACHERS.forEach(t => {
+      DAYS.forEach(day => {
+        const periodMap = this.teacherSchedule[t.id][day];
+        const seenPeriods = {};
+        Object.entries(periodMap).forEach(([pid, cid]) => {
+          if (seenPeriods[pid] && seenPeriods[pid] !== cid) {
+            // Check if both classes are fixed (by design for practicals)
+            if (!isFixed(seenPeriods[pid]) || !isFixed(cid)) {
+              this.errors.push(`Double-booking: ${t.name} assigned to ${seenPeriods[pid]} and ${cid} on ${day} ${pid}`);
+            }
+          }
+          seenPeriods[pid] = cid;
+        });
+      });
+    });
+
+    // Check total sessions per class matches
+    CLASSES.forEach(cls => {
+      if (cls.fixed) return;
+      let total = 0;
+      DAYS.forEach(day => {
+        const periods = day === 'Saturday' ? this.getSaturdayPeriodsList(cls.id) : this.getWeekdayPeriodsList(cls.id);
+        periods.forEach(pid => {
+          if (this.timetable[cls.id][day][pid]) total++;
+        });
+      });
+      if (total !== cls.totalWeek) {
+        this.warnings.push(`${cls.id}: Total sessions ${total}, expected ${cls.totalWeek}`);
+      }
+    });
+
+    // Warn about teachers exceeding their session targets
+    TEACHERS.forEach(t => {
+      const target = getTeacherSessionTarget(t.id);
+      const actual = this.teacherSessionCount[t.id] || 0;
+      if (actual > target) {
+        this.warnings.push(`${t.name} assigned ${actual} sessions, target ${target} (over by ${actual - target})`);
+      }
+    });
+  }
+}
+
+</script>
+  <script>
+// ============================================================
+// views.js — Rendering functions for all 5 views
+// ============================================================
+
+const Views = {
+  currentView: 'master',
+  currentClassFilter: null,
+  currentTeacherFilter: null,
+  currentDayFilter: null,
+
+  renderMaster(timetable) {
+    const container = document.getElementById('view-content');
+    let html = '<div class="master-controls">';
+    html += '<label>Grade Filter: </label>';
+    html += '<select id="grade-filter" onchange="Views.applyGradeFilter()">';
+    html += '<option value="all">All Grades</option>';
+    for (let g = 1; g <= 12; g++) {
+      html += `<option value="${g}">${g}${g === 1 ? 'st' : g === 2 ? 'nd' : g === 3 ? 'rd' : 'th'}</option>`;
+    }
+    html += '</select></div>';
+
+    html += '<div class="timetable-scroll">';
+    html += '<table class="timetable master-table">';
+
+    const gradeFilter = document.getElementById('grade-filter')?.value || 'all';
+    let classes = CLASSES;
+    if (gradeFilter !== 'all') {
+      classes = CLASSES.filter(c => c.grade === parseInt(gradeFilter));
+    }
+
+    // Header row
+    html += '<thead><tr><th>Day</th><th>Time</th>';
+    classes.forEach(c => {
+      const label = c.division ? `${c.name} ${c.division}` : c.name;
+      html += `<th class="class-header">${label}</th>`;
+    });
+    html += '</tr></thead>';
+
+    // Body
+    html += '<tbody>';
+    DAYS.forEach(day => {
+      const maxPeriods = Math.max(...classes.map(c =>
+        day === 'Saturday' ? this.getSaturdayPeriodCount(c.id) : this.getWeekdayPeriodCount(c.id)
+      ));
+
+      const periods = day === 'Saturday' ? PERIODS_3_10_SAT : PERIODS_3_10;
+
+      for (let pi = 0; pi < maxPeriods; pi++) {
+        const period = periods[pi];
+        if (!period) continue;
+
+        html += '<tr>';
+        if (pi === 0) {
+          html += `<td class="day-cell" rowspan="${maxPeriods}">${day}</td>`;
+        }
+        html += `<td class="time-cell">${period.start}–${period.end}</td>`;
+
+        classes.forEach(c => {
+          const cellPeriods = day === 'Saturday' ? this.getSaturdayPeriodIds(c.id) : this.getWeekdayPeriodIds(c.id);
+          const pid = cellPeriods[pi];
+
+          if (!pid) {
+            html += '<td class="empty-cell"></td>';
+            return;
+          }
+
+          const entry = timetable[c.id]?.[day]?.[pid];
+          if (entry) {
+            const tags = formatTags(entry.tags);
+            const teacher = entry.teacher ? getTeacherById(entry.teacher)?.name : '';
+            const altTeachers = entry.altTeachers ? entry.altTeachers.map(id => getTeacherById(id)?.name || id).join(', ') : '';
+            const isMPT = entry.tags?.includes('mpt');
+            const isCT = isClassTeacher(entry.teacher, c.id);
+            let cls = 'period-cell';
+            if (isMPT) cls += ' mpt-cell';
+            if (isCT && pid === 'P1') cls += ' ct-cell';
+            if (entry.tags?.includes('revision')) cls += ' revision-cell';
+            if (entry.tags?.includes('test')) cls += ' test-cell';
+            if (entry.tags?.includes('practical')) cls += ' practical-cell';
+            if (entry.tags?.includes('combined')) cls += ' combined-cell';
+            if (entry.tags?.includes('extra')) cls += ' extra-cell';
+
+            const tagStr = tags ? `<span class="tag">${tags}</span>` : '';
+            const noteStr = entry.note ? `<span class="note">${entry.note}</span>` : '';
+            html += `<td class="${cls}">
+              <div class="subject">${entry.subject}</div>
+              <div class="teacher">${teacher}${altTeachers ? '<br>' + altTeachers : ''}</div>
+              ${tagStr}${noteStr}
+            </td>`;
+          } else {
+            html += '<td class="empty-cell">—</td>';
+          }
+        });
+
+        html += '</tr>';
+      }
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  },
+
+  renderTeacherView(timetable) {
+    const container = document.getElementById('view-content');
+    let html = '<div class="view-controls">';
+    html += '<label>Select Teacher: </label>';
+    html += '<select id="teacher-select" onchange="Views.renderTeacherView(window._tt)">';
+    html += '<option value="">-- Choose --</option>';
+    TEACHERS.forEach(t => {
+      html += `<option value="${t.id}" ${this.currentTeacherFilter === t.id ? 'selected' : ''}>${t.name}</option>`;
+    });
+    html += '</select></div>';
+
+    const teacherId = this.currentTeacherFilter || document.getElementById('teacher-select')?.value;
+    if (!teacherId) {
+      container.innerHTML = html + '<p>Select a teacher to view their schedule.</p>';
+      return;
+    }
+
+    const teacher = getTeacherById(teacherId);
+    html += `<h3>${teacher.name} — Weekly Schedule</h3>`;
+
+    // Get all classes this teacher teaches
+    const teacherClasses = getTeacherClasses(teacherId);
+
+    html += '<table class="timetable teacher-table">';
+    html += '<thead><tr><th>Day</th><th>Period</th><th>Time</th><th>Class</th><th>Subject</th><th>Tags</th></tr></thead>';
+    html += '<tbody>';
+
+    let totalSessions = 0;
+    DAYS.forEach(day => {
+      const periods = day === 'Saturday' ? PERIODS_3_10_SAT : PERIODS_3_10;
+      let dayStart = true;
+
+      teacherClasses.forEach(cid => {
+        const cls = getClassById(cid);
+        const dayPeriods = day === 'Saturday' ? this.getSaturdayPeriodIds(cid) : this.getWeekdayPeriodIds(cid);
+
+        dayPeriods.forEach((pid, pi) => {
+          const entry = timetable[cid]?.[day]?.[pid];
+          if (entry && entry.teacher === teacherId) {
+            totalSessions++;
+            const period = periods[pi] || periods.find(p => p.id === pid);
+            const classLabel = cls.division ? `${cls.name} ${cls.division}` : cls.name;
+            const tags = formatTags(entry.tags);
+            const tagClass = entry.tags?.includes('extra') ? 'extra-cell' : '';
+
+            html += `<tr class="${tagClass}">`;
+            html += `<td>${dayStart ? day : ''}</td>`;
+            html += `<td>${pid}</td>`;
+            html += `<td>${period ? period.start + '–' + period.end : ''}</td>`;
+            html += `<td>${classLabel}</td>`;
+            html += `<td>${entry.subject}</td>`;
+            html += `<td>${tags}</td>`;
+            html += '</tr>';
+            dayStart = false;
+          }
+        });
+      });
+    });
+
+    html += '</tbody></table>';
+    html += `<p><strong>Total Sessions:</strong> ${totalSessions} / ${getTeacherSessionTarget(teacherId)}</p>`;
+
+    container.innerHTML = html;
+  },
+
+  renderFreeView(timetable) {
+    const container = document.getElementById('view-content');
+    let html = '<div class="view-controls">';
+    html += '<label>Select Day: </label>';
+    html += '<select id="day-select" onchange="Views.renderFreeView(window._tt)">';
+    DAYS.forEach(d => {
+      html += `<option value="${d}" ${this.currentDayFilter === d ? 'selected' : ''}>${d}</option>`;
+    });
+    html += '</select></div>';
+
+    const day = this.currentDayFilter || document.getElementById('day-select')?.value || 'Monday';
+    const periods = day === 'Saturday' ? PERIODS_3_10_SAT : PERIODS_3_10;
+
+    html += `<h3>Free Teachers on ${day}</h3>`;
+    html += '<table class="timetable free-table">';
+    html += '<thead><tr><th>Period</th><th>Time</th><th>Free Teachers</th></tr></thead>';
+    html += '<tbody>';
+
+    periods.forEach(period => {
+      const busyTeachers = new Set();
+      CLASSES.forEach(cls => {
+        const entry = timetable[cls.id]?.[day]?.[period.id];
+        if (entry && entry.teacher) {
+          busyTeachers.add(entry.teacher);
+        }
+      });
+
+      const freeTeachers = TEACHERS.filter(t => {
+        if (t.dayRestrictions && !t.dayRestrictions.includes(day)) return false;
+        return !busyTeachers.has(t.id);
+      });
+
+      html += `<tr>
+        <td class="period-label">${period.id}</td>
+        <td class="time-cell">${period.start}–${period.end}</td>
+        <td class="free-cell">${freeTeachers.map(t => t.name).join(', ') || 'None'}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  renderSubjectSummary(timetable) {
+    const container = document.getElementById('view-content');
+    let html = '<h3>Subject Session Summary</h3>';
+
+    // Collect all subjects
+    const allSubjects = new Set();
+    CLASSES.forEach(cls => {
+      Object.keys(getSubjectsForClass(cls.id)).forEach(s => allSubjects.add(s));
+    });
+
+    html += '<table class="timetable summary-master">';
+    html += '<thead><tr><th>Subject</th>';
+    CLASSES.forEach(c => {
+      const label = c.division ? `${c.name}${c.division}` : c.name;
+      html += `<th>${label}</th>`;
+    });
+    html += '<th>Total</th></tr></thead><tbody>';
+
+    [...allSubjects].sort().forEach(subj => {
+      html += `<tr><td class="subject-label">${subj}</td>`;
+      let grandTotal = 0;
+      CLASSES.forEach(cls => {
+        const needed = getSessionsRequired(cls.id, subj);
+        const done = this.countSubjectInTimetable(cls.id, subj, timetable);
+        grandTotal += done;
+        if (needed > 0) {
+          const cls2 = done >= needed ? 'ok' : (done > 0 ? 'short' : 'missing');
+          html += `<td class="${cls2}">${done}/${needed}</td>`;
+        } else {
+          html += '<td class="na">—</td>';
+        }
+      });
+      html += `<td class="total">${grandTotal}</td></tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  renderTeacherSummary(timetable) {
+    const container = document.getElementById('view-content');
+    let html = '<h3>Teacher Session Summary</h3>';
+    html += '<table class="timetable teacher-summary-table">';
+    html += '<thead><tr><th>#</th><th>Teacher</th><th>Grades (Lectures)</th><th>Total Sessions</th></tr></thead><tbody>';
+
+    TEACHERS.forEach((t, idx) => {
+      const classCounts = [];
+      let total = 0;
+      CLASSES.forEach(cls => {
+        let count = 0;
+        DAYS.forEach(day => {
+          const periodIds = day === 'Saturday'
+            ? this.getSaturdayPeriodIds(cls.id)
+            : this.getWeekdayPeriodIds(cls.id);
+          periodIds.forEach(pid => {
+            const e = timetable[cls.id]?.[day]?.[pid];
+            if (e && e.teacher === t.id) count++;
+          });
+        });
+        if (count > 0) {
+          const label = cls.division ? `${cls.name}${cls.division}` : cls.name;
+          classCounts.push(`${label}(${count}lec)`);
+          total += count;
+        }
+      });
+
+      const gradesStr = classCounts.join(', ');
+      html += `<tr>
+        <td class="num">${idx + 1}</td>
+        <td class="teacher-name">${t.name}</td>
+        <td class="grades-cell">${gradesStr}</td>
+        <td class="num total-cell">${total}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  },
+
+  // ---- Helpers ----
+  getWeekdayPeriodCount(classId) {
+    const cls = getClassById(classId);
+    return cls ? cls.periodsWeekday : 6;
+  },
+
+  getSaturdayPeriodCount(classId) {
+    const cls = getClassById(classId);
+    return cls ? cls.periodsSat : 5;
+  },
+
+  getWeekdayPeriodIds(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10.map(p => p.id);
+    return PERIODS_1_2_11_12.slice(0, cls.periodsWeekday).map(p => p.id);
+  },
+
+  getSaturdayPeriodIds(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10_SAT.map(p => p.id);
+    if (cls.group === '1-2') return PERIODS_1_2_SAT.map(p => p.id);
+    if (cls.group === '11-12') return PERIODS_11_12_SAT.map(p => p.id);
+    return [];
+  },
+
+  getSaturdayPeriodList(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10_SAT;
+    if (cls.group === '1-2') return PERIODS_1_2_SAT;
+    if (cls.group === '11-12') return PERIODS_11_12_SAT;
+    return [];
+  },
+
+  countSubjectInTimetable(classId, subject, timetable) {
+    let count = 0;
+    DAYS.forEach(day => {
+      const periods = day === 'Saturday' ? this.getSaturdayPeriodIds(classId) : this.getWeekdayPeriodIds(classId);
+      periods.forEach(pid => {
+        const entry = timetable[classId]?.[day]?.[pid];
+        if (entry && entry.subject === subject) count++;
+      });
+    });
+    return count;
+  },
+
+  applyGradeFilter() {
+    this.renderMaster(window._tt);
+  },
+
+  // ---- Interactive Teacher Reassignment ----
+  _swapOverlay: null,
+
+  renderClassView(timetable) {
+    const container = document.getElementById('view-content');
+
+    const dropdownVal = document.getElementById('class-select')?.value;
+    const classId = dropdownVal || this.currentClassFilter || '';
+    if (classId) this.currentClassFilter = classId;
+
+    let html = '<div class="view-controls">';
+    html += '<label>Select Class: </label>';
+    html += '<select id="class-select" onchange="Views.renderClassView(window._tt)">';
+    html += '<option value="">-- Choose --</option>';
+    CLASSES.forEach(c => {
+      const label = c.division ? `${c.name} ${c.division}` : c.name;
+      html += `<option value="${c.id}" ${this.currentClassFilter === c.id ? 'selected' : ''}>${label}</option>`;
+    });
+    html += '</select>';
+
+    // Subject highlight dropdown
+    if (classId) {
+      const subjects = Object.keys(getSubjectsForClass(classId)).filter(s =>
+        Object.keys(timetable[classId] || {}).some(day =>
+          Object.values(timetable[classId][day] || {}).some(e => e && e.subject === s)
+        )
+      );
+      html += ' <label>Subject: </label>';
+      html += '<select id="swap-subject-select" onchange="Views.renderClassView(window._tt)">';
+      html += '<option value="">-- None --</option>';
+      subjects.forEach(s => {
+        html += `<option value="${s}" ${this._swapSubject === s ? 'selected' : ''}>${s}</option>`;
+      });
+      html += '</select>';
+      this._swapSubject = document.getElementById('swap-subject-select')?.value || '';
+    }
+    html += '</div>';
+
+    if (!classId) {
+      container.innerHTML = html + '<p>Select a class to view its timetable.</p>';
+      return;
+    }
+
+    // Compute highlight cells: periods where the selected subject's teacher is free
+    let highlightCells = new Set();
+    if (this._swapSubject) {
+      const teacherIds = new Set();
+      DAYS.forEach(day => {
+        const periodIds = day === 'Saturday' ? this.getSaturdayPeriodIds(classId) : this.getWeekdayPeriodIds(classId);
+        periodIds.forEach(pid => {
+          const e = timetable[classId]?.[day]?.[pid];
+          if (e && e.subject === this._swapSubject && e.teacher) {
+            teacherIds.add(e.teacher);
+          }
+        });
+      });
+      teacherIds.forEach(tid => {
+        DAYS.forEach(day => {
+          const periodIds = day === 'Saturday' ? this.getSaturdayPeriodIds(classId) : this.getWeekdayPeriodIds(classId);
+          periodIds.forEach(pid => {
+            const e = timetable[classId]?.[day]?.[pid];
+            if (e && e.subject === this._swapSubject) return;
+            if (this.isTeacherFreeAt(timetable, tid, day, pid, classId)) {
+              highlightCells.add(day + '|' + pid);
+            }
+          });
+        });
+      });
+    }
+
+    const cls = getClassById(classId);
+    const periods = cls.group === '3-10' ? PERIODS_3_10 : PERIODS_1_2_11_12;
+    const satPeriods = day => day === 'Saturday' ? this.getSaturdayPeriodList(classId) : periods;
+
+    html += `<h3>${cls.name}${cls.division ? ' ' + cls.division : ''} — Weekly Timetable</h3>`;
+    html += '<p class="swap-hint">Click a cell to see free teachers available for that time slot.</p>';
+    html += '<table class="timetable class-table" id="class-timetable">';
+    html += '<thead><tr><th>Period</th><th>Time</th>';
+    DAYS.forEach(d => html += `<th>${d}</th>`);
+    html += '</tr></thead><tbody>';
+
+    const maxP = Math.max(...DAYS.map(d => satPeriods(d).length));
+
+    for (let pi = 0; pi < maxP; pi++) {
+      html += '<tr>';
+      const refPeriods = periods;
+      if (pi < refPeriods.length) {
+        html += `<td class="period-label">${refPeriods[pi].id}</td>`;
+        html += `<td class="time-cell">${refPeriods[pi].start}–${refPeriods[pi].end}</td>`;
+      } else {
+        html += `<td class="period-label">P${pi + 1}</td>`;
+        html += '<td class="time-cell"></td>';
+      }
+
+      DAYS.forEach(day => {
+        const dayPeriods = satPeriods(day);
+        const pid = dayPeriods[pi]?.id || `P${pi + 1}`;
+        const entry = timetable[classId]?.[day]?.[pid];
+        const isHighlighted = this._swapSubject && highlightCells.has(day + '|' + pid);
+
+        if (entry) {
+          const tags = formatTags(entry.tags);
+          const teacher = entry.teacher ? getTeacherById(entry.teacher)?.name : '';
+          const altTeachers = entry.altTeachers ? entry.altTeachers.map(id => getTeacherById(id)?.name || id).join(', ') : '';
+          let cls2 = 'period-cell clickable-cell';
+          if (entry.tags?.includes('mpt')) cls2 += ' mpt-cell';
+          if (entry.tags?.includes('revision')) cls2 += ' revision-cell';
+          if (entry.tags?.includes('test')) cls2 += ' test-cell';
+          if (entry.tags?.includes('practical')) cls2 += ' practical-cell';
+          if (entry.tags?.includes('combined')) cls2 += ' combined-cell';
+          if (entry.tags?.includes('extra')) cls2 += ' extra-cell';
+          if (isHighlighted) cls2 += ' subject-highlight-cell';
+
+          const tagStr = tags ? `<span class="tag">${tags}</span>` : '';
+          html += `<td class="${cls2}" onclick="Views.showTeacherSwapModal(window._tt, '${classId}', '${day}', '${pid}')">
+            <div class="subject">${entry.subject}</div>
+            <div class="teacher">${teacher}${altTeachers ? '<br>' + altTeachers : ''}</div>
+            ${tagStr}
+          </td>`;
+        } else {
+          html += '<td class="empty-cell">—</td>';
+        }
+      });
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+
+    // Session summary
+    html += '<h4>Session Summary <span class="summary-ts">' + new Date().toLocaleTimeString() + '</span></h4>';
+    html += '<table class="summary-table"><thead><tr><th>Subject</th><th>Required</th><th>Scheduled</th><th>Status</th></tr></thead><tbody>';
+    const needed = getSubjectsForClass(classId);
+    Object.keys(needed).forEach(subj => {
+      const req = needed[subj];
+      const done = timetable[classId] ? this.countSubjectInTimetable(classId, subj, timetable) : 0;
+      const status = done >= req ? '✓' : `Short ${req - done}`;
+      const cls3 = done >= req ? 'ok' : 'short';
+      html += `<tr><td>${subj}</td><td>${req}</td><td>${done}</td><td class="${cls3}">${status}</td></tr>`;
+    });
+    html += '</tbody></table>';
+
+    container.innerHTML = html;
+
+    this.closeTeacherSwapModal();
+  },
+
+  findFreeTeachers(timetable, classId, day, pid) {
+    const entry = timetable[classId]?.[day]?.[pid];
+    if (!entry) return { teachesClass: [], other: [] };
+
+    const currentTeacherId = entry.teacher;
+    const currentSubject = entry.subject;
+    const teachesClass = [];
+    const other = [];
+
+    TEACHERS.forEach(t => {
+      if (t.id === currentTeacherId) return;
+      if (this.isTeacherFreeAt(timetable, t.id, day, pid, classId)) {
+        // Find subjects this teacher can teach for this class
+        const subjects = t.assignments
+          .filter(a => a.classIds.includes(classId))
+          .map(a => a.subject);
+
+        const teaches = subjects.length > 0;
+        const target = teaches ? teachesClass : other;
+
+        if (teaches) {
+          // One entry per subject the teacher can teach
+          subjects.forEach(subject => {
+            target.push({ teacher: t, subject });
+          });
+        } else {
+          // Teacher doesn't teach this class — just show teacher name
+          target.push({ teacher: t, subject: null });
+        }
+      }
+    });
+
+    return { teachesClass, other };
+  },
+
+  showTeacherSwapModal(timetable, classId, day, pid) {
+    this.closeTeacherSwapModal();
+
+    const entry = timetable[classId]?.[day]?.[pid];
+    if (!entry) return;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'swap-overlay';
+    overlay.id = 'swap-overlay';
+    overlay.innerHTML = `
+      <div class="swap-modal">
+        <div class="swap-header">
+          <h3>${entry.subject} at ${day} ${pid}</h3>
+          <span>Current: ${getTeacherById(entry.teacher)?.name || entry.teacher}</span>
+          <button class="swap-close-btn" onclick="Views.closeTeacherSwapModal()">✕</button>
+        </div>
+        <div class="swap-body" id="swap-candidates">
+          Loading...
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+    this._swapOverlay = overlay;
+    this._swapClassId = classId;
+    this._swapDay = day;
+    this._swapPid = pid;
+
+    this.renderTeacherSwapCandidates(timetable, classId, day, pid);
+  },
+
+  renderTeacherSwapCandidates(timetable, classId, day, pid) {
+    const container = document.getElementById('swap-candidates');
+    if (!container) return;
+
+    const { teachesClass, other } = this.findFreeTeachers(timetable, classId, day, pid);
+
+    if (teachesClass.length === 0 && other.length === 0) {
+      container.innerHTML = '<p class="swap-no-candidates">No free teachers available at this time slot.</p>';
+      return;
+    }
+
+    let html = '';
+    if (teachesClass.length > 0) {
+      html += '<h4 style="margin:6px 0 4px;font-size:13px;color:#2c3e50;">Teachers who teach this class</h4>';
+      html += '<div class="swap-candidate-list" style="margin-bottom:10px;">';
+      teachesClass.forEach(t => {
+        const name = getTeacherById(t.teacher.id)?.name || t.teacher.id;
+        html += `<div class="swap-candidate" onclick="Views.reassignTeacher(window._tt, '${classId}', '${day}', '${pid}', '${t.teacher.id}', '${t.subject}')">
+          <span class="swap-candidate-period">${name}</span>
+          <span class="swap-candidate-subject">${t.subject}</span>
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    if (other.length > 0) {
+      html += '<h4 style="margin:6px 0 4px;font-size:13px;color:#7f8c8d;">Other free teachers</h4>';
+      html += '<div class="swap-candidate-list">';
+      other.forEach(t => {
+        const name = getTeacherById(t.teacher.id)?.name || t.teacher.id;
+        html += `<div class="swap-candidate" onclick="Views.reassignTeacher(window._tt, '${classId}', '${day}', '${pid}', '${t.teacher.id}', null)" style="opacity:0.7;">
+          <span class="swap-candidate-period">${name}</span>
+          <span class="swap-candidate-subject">(doesn't teach this class)</span>
+        </div>`;
+      });
+      html += '</div>';
+    }
+
+    container.innerHTML = html;
+  },
+
+  isTeacherFreeAt(timetable, teacherId, day, pid, excludeClassId) {
+    for (const cid of Object.keys(timetable)) {
+      if (excludeClassId && cid === excludeClassId) continue;
+      const e = timetable[cid]?.[day]?.[pid];
+      if (e && e.teacher === teacherId) return false;
+    }
+    return true;
+  },
+
+  reassignTeacher(timetable, classId, day, pid, newTeacherId, newSubject) {
+    const entry = timetable[classId]?.[day]?.[pid];
+    if (!entry) return;
+
+    entry.teacher = newTeacherId;
+    if (newSubject) {
+      entry.subject = newSubject;
+    }
+
+    this.closeTeacherSwapModal();
+    this.renderClassView(timetable);
+  },
+
+  closeTeacherSwapModal() {
+    const overlay = document.getElementById('swap-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+    this._swapClassId = null;
+    this._swapDay = null;
+    this._swapPid = null;
+  }
+};
+
+</script>
+  <script>
+// ============================================================
+// csv.js — CSV Export with tags
+// ============================================================
+
+const CSV = {
+  export(timetable) {
+    const rows = [['Class', 'Division', 'Day', 'Period', 'Time', 'Subject', 'Teacher', 'Tags']];
+
+    CLASSES.forEach(cls => {
+      DAYS.forEach(day => {
+        const periods = day === 'Saturday'
+          ? this.getSaturdayPeriods(cls.id)
+          : this.getWeekdayPeriods(cls.id);
+
+        periods.forEach(period => {
+          const entry = timetable[cls.id]?.[day]?.[period.id];
+          if (!entry) return;
+
+          const teacherName = entry.teacher ? (getTeacherById(entry.teacher)?.name || '') : '';
+          const altNames = entry.altTeachers ? entry.altTeachers.map(id => getTeacherById(id)?.name || id).join(' / ') : '';
+          const teacherStr = altNames ? teacherName + ' / ' + altNames : teacherName;
+          const tags = this.formatTagsForCSV(entry.tags);
+          const division = cls.division || '';
+
+          rows.push([
+            cls.name,
+            division,
+            day,
+            period.id,
+            `${period.start}–${period.end}`,
+            entry.subject,
+            teacherStr,
+            tags
+          ]);
+        });
+      });
+    });
+
+    const csv = this.toCSVString(rows);
+    this.download(csv, 'timetable.csv');
+  },
+
+  formatTagsForCSV(tags) {
+    if (!tags || tags.length === 0) return '';
+    return tags.map(t => {
+      switch (t) {
+        case 'extra': return '[E]';
+        case 'combined': return '[C]';
+        case 'test': return '[T]';
+        case 'practical': return '[P]';
+        case 'revision': return '[R]';
+        case 'mpt': return '[MPT]';
+        default:
+          if (t.startsWith('combined:')) return '[C]';
+          return '';
+      }
+    }).filter(Boolean).join(' ');
+  },
+
+  toCSVString(rows) {
+    return rows.map(row =>
+      row.map(cell => {
+        const s = String(cell);
+        if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }).join(',')
+    ).join('\n');
+  },
+
+  download(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  },
+
+  getWeekdayPeriods(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10;
+    return PERIODS_1_2_11_12;
+  },
+
+  getSaturdayPeriods(classId) {
+    const cls = getClassById(classId);
+    if (!cls) return [];
+    if (cls.group === '3-10') return PERIODS_3_10_SAT;
+    if (cls.group === '1-2') return PERIODS_1_2_SAT;
+    if (cls.group === '11-12') return PERIODS_11_12_SAT;
+    return [];
+  }
+};
+
+</script>
+  <script>
+// ============================================================
+// app.js — Main application initialization and event handlers
+// ============================================================
+
+const App = {
+  timetable: null,
+  isGenerating: false,
+
+  init() {
+    const genBtn = document.getElementById('generate-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const seedInput = document.getElementById('seed-input');
+
+    genBtn.addEventListener('click', () => this.generate());
+    exportBtn.addEventListener('click', () => this.exportCSV());
+
+    // Tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        e.target.classList.add('active');
+        Views.currentView = e.target.dataset.view;
+        this.renderCurrentView();
+      });
+    });
+
+    // Enter key on seed input
+    seedInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') this.generate();
+    });
+
+    // Load last seed from localStorage
+    const lastSeed = localStorage.getItem('timetable_seed');
+    if (lastSeed) seedInput.value = lastSeed;
+  },
+
+  generate() {
+    const seedInput = document.getElementById('seed-input');
+    const seed = seedInput.value.trim() || 'default';
+    localStorage.setItem('timetable_seed', seed);
+
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = 'Generating timetable...';
+    statusEl.className = 'status generating';
+
+    this.isGenerating = true;
+    document.getElementById('generate-btn').disabled = true;
+
+    // Use setTimeout to allow UI to update
+    setTimeout(() => {
+      try {
+        const solver = new TimetableSolver(seed);
+        const result = solver.solve();
+        this.timetable = result.timetable;
+        window._tt = result.timetable;
+
+        let statusMsg = 'Timetable generated successfully!';
+        if (result.warnings.length > 0) {
+          statusMsg += ` (${result.warnings.length} warnings)`;
+        }
+        if (result.errors.length > 0) {
+          statusMsg += ` (${result.errors.length} errors)`;
+        }
+
+        statusEl.textContent = statusMsg;
+        statusEl.className = result.errors.length > 0 ? 'status error' : 'status success';
+
+        this.renderCurrentView();
+        this.renderWarnings(result.warnings, result.errors);
+      } catch (err) {
+        statusEl.textContent = 'Error: ' + err.message;
+        statusEl.className = 'status error';
+        console.error(err);
+      } finally {
+        this.isGenerating = false;
+        document.getElementById('generate-btn').disabled = false;
+      }
+    }, 50);
+  },
+
+  renderCurrentView() {
+    if (!this.timetable) return;
+
+    switch (Views.currentView) {
+      case 'master':
+        Views.renderMaster(this.timetable);
+        break;
+      case 'class':
+        Views.renderClassView(this.timetable);
+        break;
+      case 'teacher':
+        Views.renderTeacherView(this.timetable);
+        break;
+      case 'free':
+        Views.renderFreeView(this.timetable);
+        break;
+      case 'summary':
+        Views.renderSubjectSummary(this.timetable);
+        break;
+      case 'teacher-summary':
+        Views.renderTeacherSummary(this.timetable);
+        break;
+    }
+  },
+
+  exportCSV() {
+    if (!this.timetable) {
+      alert('Generate a timetable first!');
+      return;
+    }
+    CSV.export(this.timetable);
+  },
+
+  renderWarnings(warnings, errors) {
+    const container = document.getElementById('warnings');
+    if (!container) return;
+
+    let html = '';
+    if (errors.length > 0) {
+      html += '<div class="error-block"><h4>Errors:</h4><ul>';
+      errors.forEach(e => html += `<li class="error-item">${e}</li>`);
+      html += '</ul></div>';
+    }
+    if (warnings.length > 0) {
+      html += '<div class="warning-block"><h4>Warnings:</h4><ul>';
+      warnings.forEach(w => html += `<li class="warning-item">${w}</li>`);
+      html += '</ul></div>';
+    }
+    container.innerHTML = html;
+  }
+};
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', () => App.init());
+
+</script>
+</body>
+</html>
