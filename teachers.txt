@@ -1,0 +1,139 @@
+Clean text version of the **Teacher Allocation** and **Class Teacher Allocation**.
+
+# Teacher Allocation
+
+| Teacher                  | Classes        | Subject                      | Sessions |
+
+| ------------------------ | -------------- | ---------------------------- | -------- |
+
+| Shital Miss              | 6th–10th       | Marathi                      | 30       |
+
+| Kalpana Miss             | 6th–10th       | Hindi                        | 30       |
+
+| Beauty Miss              | 8th–12th       | English                      | 26       |
+
+| Sandip Sir               | 7th–10th       | Social Studies (S.St)        | 30       |
+
+| Rushikant Sir            | 9th–12th       | Mathematics                  | 24       |
+
+| Sudarshan Sir            | 9th–12th       | Physics                      | 16       |
+
+| Sudarshan Sir              | 12th     | Physical Education (PE)      | 2        |
+
+| Chordiya Sir             | 3rd–10th       | Chess                        | 19       |
+
+| Sayali Miss              | 9th–12th       | Chemistry                    | 16       |
+
+| Sayali Miss              | 8th            | Science                      | 10       |
+
+| Sayali Miss              | 11th     | Physical Education (PE)      | 2      |
+
+| Suvarna Miss             | 11th–12th      | Biology                      | 10       |
+
+| Shivani Miss             | 9th–10th       | Biology                      | 6        |
+
+| Shivani Miss             | 5th–7th        | Science                      | 23       |
+
+| Priyanka (Balaji New Tr) | 9th–10th       | Computer                     | 8        |
+
+| Priyanka (Balaji New Tr) | 3rd & 5th      | Computer                     | 16       |
+
+| Soham Sir                | 3rd–10th       | Art                          | 22       |
+
+| Priyanka Auti            | 11th–12th      | Computer                     | 4        |
+
+| Priyanka Auti            | 4th, 7th & 8th | Computer                     | 20       |
+
+| Jayashree Miss           | 2nd–5th        | Marathi                      | 26       |
+
+| Pawan Sir                | 1st–8th        | Dance & Gymnastics           | 23       |
+
+| Ashwini Miss             | 4th–6th        | Mathematics                  | 20       |
+
+| Shobha Miss              | 2nd & 3rd      | Mathematics                  | 18       |
+
+| Shobha Miss              | 2nd            | English & EVS                | 8        |
+
+| Class Teachers                      | 1st to 10th | MPT                          | 16       |
+
+| PE Sir            | 1st to 10th     | PE                           | 16       |
+
+| Bundele Miss             | 1st & 2nd      | Hindi                        | 12       |
+
+| Bundele Miss             | 1st & 2nd      | Art                          | 8        |
+
+| Cricket / BB Coach       | 1st–8th        | Cricket & Basketball         | 20       |
+
+| Swapna Miss              | 6th            | Social Studies (S.St)        | 5        |
+
+| Swapna Miss              | 5th & 7th      | English                      | 20       |
+
+| Rathor Miss              | 6th            | English                      | 5        |
+
+| Rathor Miss              | 7th & 8th      | Mathematics                  | 20       |
+
+| Vaishali Miss            | 1st            | English, Maths, EVS, Phonics | 30       |
+
+| Shivali Miss             | 3rd            | EVS                          | 10       |
+
+| Shivali Miss             | 3rd            | English                      | 10       |
+
+| Shivali Miss             | 3rd            | Speaking Skills              | 4        |
+
+| Ekta Miss                | 1st & 2nd      | Computer                     | 12       |
+
+| Ekta Miss                | 4th            | English                      | 15       |
+
+| Ekta Miss                | 5th            | Phonics                     | 4      |
+
+| New IT Teacher Khushi    | 6th            | Computer                     | 4        |
+
+| Prajakta Miss            | 2nd–5th        | Hindi                        | 20       |
+
+| Prajakta Miss            | 1st            | Marathi                      | 6        |
+
+---
+
+# Class Teacher Allocation
+
+| Class | Division | Class Teacher            |
+
+| ----- | -------- | ------------------------ |
+
+| 1st   | S        | Bundele Miss             |
+
+| 1st   | M        | Vaishali Miss            |
+
+| 2nd   | S        | Prajakta Miss            |
+
+| 2nd   | M        | Shobha Miss              |
+
+| 3rd   | S        | Jayashree Miss           |
+
+| 3rd   | M        | Shivali Miss             |
+
+| 4th   | S        | Ekta Miss                |
+
+| 5th   | S        | Ashwini Miss             |
+
+| 5th   | M        | Swapna Miss              |
+
+| 6th   | S        | Kalpana Miss             |
+
+| 7th   | S        | Rathor Miss              |
+
+| 7th   | M        | Shital Miss              |
+
+| 8th   | S        | Priyanka (Balaji New Tr) |
+
+| 8th   | M        | Beauty Miss              |
+
+| 9th   | —        | Shivani Miss             |
+
+| 10th  | —        | Sandip Sir               |
+
+| 11th  | —        | Sayali Miss              |
+
+| 12th  | —        | Sudarshan Sir            |
+
+---

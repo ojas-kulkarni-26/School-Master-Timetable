@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Timetable Generator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <h1>School Timetable Generator</h1>
+    <div class="seed-group">
+      <label for="seed-input">Seed:</label>
+      <input type="text" id="seed-input" placeholder="Enter seed...">
+    </div>
+    <button class="btn btn-primary" id="generate-btn">Generate</button>
+    <button class="btn btn-secondary" id="export-btn">Export CSV</button>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-view="master">Master View</button>
+    <button class="tab-btn" data-view="class">Per-Class View</button>
+    <button class="tab-btn" data-view="teacher">Per-Teacher View</button>
+    <button class="tab-btn" data-view="free">Free Teachers</button>
+    <button class="tab-btn" data-view="summary">Subject Summary</button>
+    <button class="tab-btn" data-view="teacher-summary">Teacher Summary</button>
+  </nav>
+
+  <div class="status-bar">
+    <span id="status" class="status">Enter a seed and click Generate.</span>
+  </div>
+
+  <div id="view-content">
+    <p style="padding:20px;color:#888;">Click <strong>Generate</strong> to create the timetable.</p>
+  </div>
+
+  <div id="warnings"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/rng.js"></script>
+  <script src="js/solver.js"></script>
+  <script src="js/views.js"></script>
+  <script src="js/csv.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
