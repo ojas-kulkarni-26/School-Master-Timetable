@@ -88,6 +88,17 @@ body {
 
 .btn-secondary:hover { background: #7f8c8d; }
 
+.btn-sm {
+  background: #e0e0e0;
+  color: #333;
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.btn-sm:hover { background: #d0d0d0; }
+
 /* Tabs */
 .tab-bar {
   background: #ecf0f1;
@@ -523,6 +534,9 @@ p {
     </div>
     <button class="btn btn-primary" id="generate-btn">Generate</button>
     <button class="btn btn-secondary" id="export-btn">Export CSV</button>
+    <button class="btn btn-sm" id="export-state-btn" title="Export timetable state (seed + changes)">⬇ State</button>
+    <button class="btn btn-sm" id="import-state-btn" title="Import timetable state">⬆ State</button>
+    <button class="btn btn-sm" id="clear-state-btn" title="Clear saved state and changes">✕ Clear</button>
   </header>
 
   <nav class="tab-bar">
@@ -2264,6 +2278,8 @@ class TimetableSolver {
 // views.js — Rendering functions for all 5 views
 // ============================================================
 
+window._changes = [];
+
 const Views = {
   currentView: 'master',
   currentClassFilter: null,
@@ -2517,7 +2533,9 @@ const Views = {
 
     TEACHERS.forEach((t, idx) => {
       const classCounts = [];
+      const seen = new Set(); // (day,pid) across all classes to de-duplicate
       let total = 0;
+
       CLASSES.forEach(cls => {
         let count = 0;
         DAYS.forEach(day => {
@@ -2526,13 +2544,22 @@ const Views = {
             : this.getWeekdayPeriodIds(cls.id);
           periodIds.forEach(pid => {
             const e = timetable[cls.id]?.[day]?.[pid];
-            if (e && e.teacher === t.id) count++;
+            if (!e) return;
+            const isTeacher = e.teacher === t.id;
+            const isAlt = e.altTeachers && e.altTeachers.includes(t.id);
+            if (isTeacher || isAlt) {
+              count++;
+              const key = day + '|' + pid;
+              if (!seen.has(key)) {
+                seen.add(key);
+                total++;
+              }
+            }
           });
         });
         if (count > 0) {
           const label = cls.division ? `${cls.name}${cls.division}` : cls.name;
           classCounts.push(`${label}(${count}lec)`);
-          total += count;
         }
       });
 
@@ -2867,13 +2894,63 @@ const Views = {
     const entry = timetable[classId]?.[day]?.[pid];
     if (!entry) return;
 
+    window._changes.push({
+      classId: classId,
+      day: day,
+      pid: pid,
+      oldTeacher: entry.teacher,
+      oldSubject: entry.subject,
+      newTeacher: newTeacherId,
+      newSubject: newSubject || entry.subject
+    });
+
     entry.teacher = newTeacherId;
-    if (newSubject) {
-      entry.subject = newSubject;
-    }
+    if (newSubject) entry.subject = newSubject;
+
+    this.saveState();
 
     this.closeTeacherSwapModal();
     this.renderClassView(timetable);
+  },
+
+  // ---- State Export/Import ----
+  saveState() {
+    const seed = document.getElementById('seed-input')?.value || 'default';
+    const str = this.encodeState(seed, window._changes);
+    try { localStorage.setItem('timetable_state', str); } catch(e) {}
+  },
+
+  encodeState(seed, changes) {
+    return seed + '|' + changes.map(c =>
+      c.classId + ':' + c.day + ':' + c.pid + ':' + c.newTeacher + ':' + encodeURIComponent(c.newSubject)
+    ).join(',');
+  },
+
+  decodeState(str) {
+    const idx = str.indexOf('|');
+    if (idx === -1) return null;
+    const seed = str.slice(0, idx);
+    const changes = str.slice(idx + 1).split(',').filter(Boolean).map(c => {
+      const [classId, day, pid, newTeacher, newSubject] = c.split(':');
+      return { classId, day, pid, newTeacher, newSubject: decodeURIComponent(newSubject) };
+    });
+    return { seed, changes };
+  },
+
+  applyChanges(timetable, changes) {
+    if (!changes || changes.length === 0) return;
+    changes.forEach(c => {
+      const entry = timetable[c.classId]?.[c.day]?.[c.pid];
+      if (entry) {
+        entry.teacher = c.newTeacher;
+        if (c.newSubject) entry.subject = c.newSubject;
+      }
+    });
+  },
+
+  getExportString() {
+    const seed = document.getElementById('seed-input')?.value || 'default';
+    return this.encodeState(seed, window._changes);
   },
 
   closeTeacherSwapModal() {
@@ -3004,6 +3081,10 @@ const App = {
     genBtn.addEventListener('click', () => this.generate());
     exportBtn.addEventListener('click', () => this.exportCSV());
 
+    document.getElementById('export-state-btn').addEventListener('click', () => this.exportState());
+    document.getElementById('import-state-btn').addEventListener('click', () => this.importState());
+    document.getElementById('clear-state-btn').addEventListener('click', () => this.clearState());
+
     // Tab buttons
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -3019,9 +3100,16 @@ const App = {
       if (e.key === 'Enter') this.generate();
     });
 
-    // Load last seed from localStorage
+    // Load last seed from localStorage, and check for saved changes
     const lastSeed = localStorage.getItem('timetable_seed');
     if (lastSeed) seedInput.value = lastSeed;
+    const savedState = localStorage.getItem('timetable_state');
+    if (savedState) {
+      const decoded = Views.decodeState(savedState);
+      if (decoded) {
+        seedInput.value = decoded.seed;
+      }
+    }
   },
 
   generate() {
@@ -3043,6 +3131,16 @@ const App = {
         const result = solver.solve();
         this.timetable = result.timetable;
         window._tt = result.timetable;
+
+        // Apply saved changes if they match the current seed
+        const savedState = localStorage.getItem('timetable_state');
+        if (savedState) {
+          const decoded = Views.decodeState(savedState);
+          if (decoded && decoded.seed === seed && decoded.changes.length > 0) {
+            Views.applyChanges(this.timetable, decoded.changes);
+            window._changes = decoded.changes;
+          }
+        }
 
         let statusMsg = 'Timetable generated successfully!';
         if (result.warnings.length > 0) {
@@ -3099,6 +3197,74 @@ const App = {
       return;
     }
     CSV.export(this.timetable);
+  },
+
+  exportState() {
+    if (!this.timetable) {
+      alert('Generate a timetable first!');
+      return;
+    }
+    const str = Views.getExportString();
+    this.showStateModal(str, 'Export');
+  },
+
+  importState() {
+    this.showStateModal('', 'Import');
+  },
+
+  clearState() {
+    if (!confirm('Clear saved state and all changes?')) return;
+    window._changes = [];
+    localStorage.removeItem('timetable_state');
+    document.getElementById('seed-input').value = '';
+    alert('State cleared.');
+  },
+
+  showStateModal(prefill, mode) {
+    const overlay = document.createElement('div');
+    overlay.className = 'swap-overlay';
+    overlay.id = 'state-overlay';
+    const isExport = mode === 'Export';
+    overlay.innerHTML = `
+      <div class="swap-modal">
+        <div class="swap-header">
+          <h3>${isExport ? 'Export State' : 'Import State'}</h3>
+          <button class="swap-close-btn" onclick="document.getElementById('state-overlay').remove()">✕</button>
+        </div>
+        <div class="swap-body">
+          ${isExport
+            ? '<p style="margin-bottom:8px;font-size:12px;color:#555;">Copy this string to transfer your timetable + changes to another device. Paste it in the Import dialog on the target device, then click Generate.</p>'
+            : '<p style="margin-bottom:8px;font-size:12px;color:#555;">Paste an exported state string below, then click Generate to recreate the timetable with all changes applied.</p>'
+          }
+          <textarea id="state-text" style="width:100%;height:100px;padding:8px;font-family:monospace;font-size:11px;border:1px solid #ddd;border-radius:4px;resize:vertical;" ${isExport ? 'readonly' : ''}>${prefill}</textarea>
+          <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end;">
+            ${isExport
+              ? '<button class="btn btn-primary" onclick="var t=document.getElementById(\'state-text\');t.select();document.execCommand(\'copy\');alert(\'Copied!\')">Copy</button>'
+              : '<button class="btn btn-primary" onclick="App.doImport()">Import & Generate</button>'
+            }
+            <button class="btn btn-secondary" onclick="document.getElementById('state-overlay').remove()">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  },
+
+  doImport() {
+    const text = document.getElementById('state-text')?.value;
+    if (!text) return;
+    const decoded = Views.decodeState(text);
+    if (!decoded) {
+      alert('Invalid state string.');
+      return;
+    }
+    document.getElementById('state-overlay')?.remove();
+    document.getElementById('seed-input').value = decoded.seed;
+    localStorage.setItem('timetable_seed', decoded.seed);
+    // Store the changes for application on next generate
+    localStorage.setItem('timetable_state', text);
+    window._changes = decoded.changes;
+    this.generate();
   },
 
   renderWarnings(warnings, errors) {
